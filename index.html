@@ -4242,20 +4242,19 @@ function initGoogleAuth() {
     if (!window.google?.accounts?.oauth2) { setTimeout(tryInit, 200); return; }
 
     // Scope version check — clear stale session if scope changed
-    if (sessionStorage.getItem('rl_scope_ver') !== GDRIVE_SCOPE_VER) {
-      sessionStorage.removeItem('rl_user');
-      sessionStorage.removeItem('rl_token');
-      sessionStorage.setItem('rl_scope_ver', GDRIVE_SCOPE_VER);
+    if (localStorage.getItem('rl_scope_ver') !== GDRIVE_SCOPE_VER) {
+      localStorage.removeItem('rl_user');
+      
+      localStorage.setItem('rl_scope_ver', GDRIVE_SCOPE_VER);
     }
 
-    // Try to restore from sessionStorage
-    const savedUser  = sessionStorage.getItem('rl_user');
-    const savedToken = sessionStorage.getItem('rl_token');
-    if (savedUser && savedToken) {
+    // Try to restore from localStorage
+    const savedUser  = localStorage.getItem('rl_user');
+    if (savedUser) {
       try {
-        _driveUser  = JSON.parse(savedUser);
-        _driveToken = savedToken;
-        onSignedIn();
+        _driveUser = JSON.parse(savedUser);
+        // Token expires in 1hr — always re-request silently on restore
+        _silentTokenRequest();
         return;
       } catch(e) {}
     }
@@ -4283,14 +4282,14 @@ function _silentTokenRequest() {
     scope: GDRIVE_SCOPE,
     callback: async (tokenResponse) => {
       if (tokenResponse.error) {
-        sessionStorage.removeItem('rl_user');
-        sessionStorage.removeItem('rl_token');
+        localStorage.removeItem('rl_user');
+        
         _driveUser = null; _driveToken = null;
         google.accounts.id.prompt();
         return;
       }
       _driveToken = tokenResponse.access_token;
-      sessionStorage.setItem('rl_token', _driveToken);
+      
       setTimeout(_silentTokenRequest, (tokenResponse.expires_in - 300) * 1000);
     },
   });
@@ -4301,7 +4300,7 @@ function handleIdToken(response) {
   try {
     const payload = JSON.parse(atob(response.credential.split('.')[1]));
     _driveUser = { name: payload.name, email: payload.email, picture: payload.picture };
-    sessionStorage.setItem('rl_user', JSON.stringify(_driveUser));
+    localStorage.setItem('rl_user', JSON.stringify(_driveUser));
   } catch(e) {}
   requestDriveToken();
 }
@@ -4313,13 +4312,13 @@ function requestDriveToken() {
     callback: async (tokenResponse) => {
       if (tokenResponse.error) { showLoginError('Access denied: ' + tokenResponse.error); return; }
       _driveToken = tokenResponse.access_token;
-      sessionStorage.setItem('rl_token', _driveToken);
+      
       setTimeout(_silentTokenRequest, (tokenResponse.expires_in - 300) * 1000);
       await onSignedIn();
     },
   });
-  // On mobile use redirect flow — no popup
-  client.requestAccessToken({ prompt: _isMobile ? 'consent' : '' });
+  // Silent on both desktop and mobile if already consented
+  client.requestAccessToken({ prompt: '' });
 }
 
 
@@ -4374,7 +4373,7 @@ async function refreshFromDrive() {
 
 function signOut() {
   google.accounts.id.disableAutoSelect();
-  sessionStorage.removeItem('rl_user');
+  localStorage.removeItem('rl_user');
   _driveToken = null;
   _driveUser  = null;
   document.querySelector('.main').style.display         = 'none';
