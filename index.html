@@ -4232,41 +4232,51 @@ let _driveToken = null;
 let _driveUser  = null;
 
 // ── Auth ──────────────────────────────────────
+const _isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
 function initGoogleAuth() {
   document.querySelector('.main').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
 
   const tryInit = () => {
     if (!window.google?.accounts?.oauth2) { setTimeout(tryInit, 200); return; }
+
+    // Scope version check — clear stale session if scope changed
+    if (sessionStorage.getItem('rl_scope_ver') !== GDRIVE_SCOPE_VER) {
+      sessionStorage.removeItem('rl_user');
+      sessionStorage.removeItem('rl_token');
+      sessionStorage.setItem('rl_scope_ver', GDRIVE_SCOPE_VER);
+    }
+
+    // Try to restore from sessionStorage
+    const savedUser  = sessionStorage.getItem('rl_user');
+    const savedToken = sessionStorage.getItem('rl_token');
+    if (savedUser && savedToken) {
+      try {
+        _driveUser  = JSON.parse(savedUser);
+        _driveToken = savedToken;
+        onSignedIn();
+        return;
+      } catch(e) {}
+    }
+
+    // Render sign-in button
     google.accounts.id.initialize({
       client_id: GDRIVE_CLIENT_ID,
       callback: handleIdToken,
-      auto_select: true,
+      auto_select: !_isMobile,
+      ux_mode: _isMobile ? 'redirect' : 'popup',
+      login_uri: window.location.href,
     });
     google.accounts.id.renderButton(
       document.getElementById('google-signin-btn'),
       { theme: 'filled_black', size: 'large', text: 'signin_with', shape: 'rectangular', width: 280 }
     );
-    // Clear stale session if scope version changed
-    if (sessionStorage.getItem('rl_scope_ver') !== GDRIVE_SCOPE_VER) {
-      sessionStorage.removeItem('rl_user');
-      sessionStorage.setItem('rl_scope_ver', GDRIVE_SCOPE_VER);
-    }
-    // Try to restore session from sessionStorage (survives reload)
-    const saved = sessionStorage.getItem('rl_user');
-    if (saved) {
-      try {
-        _driveUser = JSON.parse(saved);
-        _silentTokenRequest(); // re-acquire access token silently
-        return;
-      } catch(e) {}
-    }
-    google.accounts.id.prompt();
+    if (!_isMobile) google.accounts.id.prompt();
   };
   tryInit();
 }
 
-// Silent token re-request — no popup, used on reload and token refresh
 function _silentTokenRequest() {
   const client = google.accounts.oauth2.initTokenClient({
     client_id: GDRIVE_CLIENT_ID,
@@ -4274,13 +4284,14 @@ function _silentTokenRequest() {
     callback: async (tokenResponse) => {
       if (tokenResponse.error) {
         sessionStorage.removeItem('rl_user');
-        _driveUser = null;
+        sessionStorage.removeItem('rl_token');
+        _driveUser = null; _driveToken = null;
         google.accounts.id.prompt();
         return;
       }
       _driveToken = tokenResponse.access_token;
+      sessionStorage.setItem('rl_token', _driveToken);
       setTimeout(_silentTokenRequest, (tokenResponse.expires_in - 300) * 1000);
-      await onSignedIn();
     },
   });
   client.requestAccessToken({ prompt: '' });
@@ -4302,12 +4313,16 @@ function requestDriveToken() {
     callback: async (tokenResponse) => {
       if (tokenResponse.error) { showLoginError('Access denied: ' + tokenResponse.error); return; }
       _driveToken = tokenResponse.access_token;
+      sessionStorage.setItem('rl_token', _driveToken);
       setTimeout(_silentTokenRequest, (tokenResponse.expires_in - 300) * 1000);
       await onSignedIn();
     },
   });
-  client.requestAccessToken({ prompt: '' });
+  // On mobile use redirect flow — no popup
+  client.requestAccessToken({ prompt: _isMobile ? 'consent' : '' });
 }
+
+
 
 async function onSignedIn() {
   document.getElementById('login-screen').style.display = 'none';
