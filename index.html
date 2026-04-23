@@ -268,9 +268,246 @@ select.fsel:focus,input.fsearch:focus{border-color:rgba(200,240,74,.4)}
   .main{margin-left:48px}
   .chart-grid,.chart-grid3,.pay-grid{grid-template-columns:1fr}
 }
+
+/* ── Mobile layout (≤600px) ── */
+@media(max-width:600px){
+  /* Hide desktop sidebar entirely */
+  .sidebar { display:none !important; }
+
+  /* Main fills full screen, leaves room for bottom tabs */
+  .main {
+    margin-left: 0 !important;
+    padding-bottom: 70px;
+  }
+
+  /* Page header */
+  .page-header {
+    padding: 12px 16px 0;
+    position: sticky;
+    top: 0;
+    background: var(--bg1);
+    z-index: 100;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .page-header-title {
+    font-family: var(--syne);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text1);
+    padding-bottom: 12px;
+  }
+  .page-header-actions { padding-bottom: 12px; display:flex; gap:8px; }
+
+  /* Page content padding */
+  .page { padding: 16px !important; }
+
+  /* KPI cards — full width stack */
+  .kpis {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+  .kpi {
+    padding: 14px 16px !important;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .kpi-val { font-size: 22px !important; }
+  .kpi-label { font-size: 11px; }
+
+  /* Tables — horizontal scroll */
+  .tbl-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table.dt { font-size: 11px; min-width: 480px; }
+  table.dt th, table.dt td { padding: 8px 10px !important; white-space: nowrap; }
+
+  /* Hide less important columns on mobile */
+  .m-hide { display: none !important; }
+
+  /* Cards */
+  .card { padding: 14px !important; }
+
+  /* Filters — wrap */
+  .filters { flex-wrap: wrap; gap: 8px !important; }
+  .fsel, .fsearch { font-size: 12px !important; }
+
+  /* Charts */
+  .chart-grid, .chart-grid3, .pay-grid { grid-template-columns: 1fr !important; }
+
+  /* Breakdown panels */
+  .breakdown-panel { padding: 10px !important; }
+  .breakdown-panel > div { grid-template-columns: 1fr !important; }
+
+  /* Section headers */
+  .sec h2 { font-size: 14px !important; }
+  .sec-sub { font-size: 10px !important; }
+
+  /* Bottom tab bar */
+  #mobile-tabs {
+    display: flex !important;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 60px;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    z-index: 1000;
+  }
+  .m-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    cursor: pointer;
+    color: var(--text3);
+    font-size: 9px;
+    font-family: var(--sans);
+    border: none;
+    background: none;
+    padding: 0;
+    transition: color .15s;
+  }
+  .m-tab.active { color: var(--accent); }
+  .m-tab svg { width: 20px; height: 20px; stroke: currentColor; }
+
+  /* Mobile top bar */
+  #mobile-topbar {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--bg1);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 200;
+  }
+  #mobile-topbar .m-logo {
+    font-family: var(--syne);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  #mobile-topbar .m-actions { display: flex; gap: 10px; align-items: center; }
+
+  /* Mobile settings drawer */
+  #mobile-drawer {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+  }
+  #mobile-drawer.open { display: block; }
+  #mobile-drawer-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,.5);
+  }
+  #mobile-drawer-panel {
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    width: 260px;
+    background: var(--bg2);
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 20px 16px;
+  }
+  .m-drawer-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 8px;
+    color: var(--text2);
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: 6px;
+  }
+  .m-drawer-item:hover { background: var(--bg3); }
+  .m-drawer-item svg { width:16px; height:16px; stroke:currentColor; flex-shrink:0; }
+}
+
+/* Hide mobile elements on desktop */
+#mobile-tabs { display: none; }
+#mobile-topbar { display: none; }
+#mobile-drawer { display: none; }
 </style>
 </head>
 <body>
+
+<!-- ══════════════════ MOBILE TOP BAR ══════════════════ -->
+<div id="mobile-topbar">
+  <div class="m-logo">ReconLens</div>
+  <div class="m-actions">
+    <div id="m-user-avatar" style="width:28px;height:28px;border-radius:50%;background:var(--bg4);overflow:hidden;display:flex;align-items:center;justify-content:center">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px;color:var(--text3)"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+    </div>
+    <button onclick="toggleMobileDrawer()" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--text2)">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="width:20px;height:20px"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════ MOBILE SETTINGS DRAWER ══════════════════ -->
+<div id="mobile-drawer">
+  <div id="mobile-drawer-overlay" onclick="toggleMobileDrawer()"></div>
+  <div id="mobile-drawer-panel">
+    <div style="font-size:11px;color:var(--text3);margin-bottom:16px;text-transform:uppercase;letter-spacing:.08em">Navigation</div>
+    <div class="m-drawer-item" onclick="mobileNav('upload');toggleMobileDrawer()">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M4 6l4-4 4 4"/><path d="M2 12h12v2H2z"/></svg>
+      Upload &amp; Process
+    </div>
+    <div class="m-drawer-item" onclick="mobileNav('orders');toggleMobileDrawer()">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1"/><path d="M5 6h6M5 9h4"/></svg>
+      Orders &amp; Shipments
+    </div>
+    <div class="m-drawer-item" onclick="mobileNav('master');toggleMobileDrawer()">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+      Master Dashboard
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin:16px 0 8px;text-transform:uppercase;letter-spacing:.08em">Settings</div>
+    <div class="m-drawer-item" onclick="mobileNav('ratecard');toggleMobileDrawer()">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h5"/></svg>
+      Rate Card
+    </div>
+    <div class="m-drawer-item" onclick="mobileNav('pricing');toggleMobileDrawer()">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 2h8l4 4v8a1 1 0 01-1 1H3a1 1 0 01-1-1V3a1 1 0 011-1z"/></svg>
+      Pricing Master
+    </div>
+    <div class="m-drawer-item" onclick="mobileNav('discounts');toggleMobileDrawer()">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="2"/><circle cx="11" cy="11" r="2"/><path d="M13 3L3 13"/></svg>
+      Discount Events
+    </div>
+    <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">
+      <div id="m-drawer-user" style="font-size:11px;color:var(--text3);margin-bottom:10px"></div>
+      <button onclick="signOut()" style="width:100%;padding:8px;font-size:12px;color:var(--text3);background:none;border:1px solid var(--border);border-radius:6px;cursor:pointer">Sign out</button>
+      <button onclick="refreshFromDrive();toggleMobileDrawer()" style="width:100%;padding:8px;margin-top:6px;font-size:12px;color:var(--accent);background:none;border:1px solid var(--accent);border-radius:6px;cursor:pointer">↻ Refresh from Drive</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ MOBILE BOTTOM TABS ══════════════════ -->
+<div id="mobile-tabs">
+  <button class="m-tab active" id="mtab-recon" onclick="mobileNav('recon')">
+    <svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+    Reconciliation
+  </button>
+  <button class="m-tab" id="mtab-inbox" onclick="mobileNav('inbox')">
+    <svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><path d="M2 4h12v10H2z"/><path d="M2 4l6 5 6-5"/></svg>
+    Settlements
+  </button>
+  <button class="m-tab" id="mtab-accuracy" onclick="mobileNav('accuracy')">
+    <svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><path d="M8 2l1.5 4.5H14l-3.8 2.7 1.5 4.5L8 11l-3.7 2.7 1.5-4.5L2 6.5h4.5z"/></svg>
+    Accuracy
+  </button>
+  <button class="m-tab" id="mtab-flags" onclick="mobileNav('flags')">
+    <svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><path d="M3 2v12M3 2l10 3-10 4"/></svg>
+    Flags
+  </button>
+</div>
 
 <!-- ══════════════════ SIDEBAR ══════════════════ -->
 <nav class="sidebar">
@@ -4337,6 +4574,7 @@ async function onSignedIn() {
       const av = document.getElementById('user-avatar');
       av.src = _driveUser.picture; av.style.display = 'block';
     }
+    updateMobileUserInfo(_driveUser);
   }
 
   showSync('Loading from Drive…');
@@ -4347,6 +4585,7 @@ async function onSignedIn() {
   if (DB.ordersLoaded || DB.reconDone) {
     restoreUI();
     addClearButton();
+    if (isMobileView()) mobileNav('recon');
   }
 
   // Auto-refresh when user switches back to this tab
@@ -4683,6 +4922,59 @@ function addClearButton() {
   btn.innerHTML = `<svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 4h12M6 4V2h4v2M13 4l-1 10H4L3 4"/></svg> Clear data`;
   btn.onclick = () => { if (confirm('Clear all saved data and start fresh?')) clearStorage(); };
   actions.prepend(btn);
+}
+
+// ══════════════════════════════════════════════
+//  MOBILE UI
+// ══════════════════════════════════════════════
+function isMobileView() { return window.innerWidth <= 600; }
+
+function mobileNav(page) {
+  // Update bottom tab active state
+  ['recon','inbox','accuracy','flags'].forEach(t => {
+    const el = document.getElementById('mtab-' + t);
+    if (el) el.classList.toggle('active', t === page);
+  });
+  nav(page);
+}
+
+function toggleMobileDrawer() {
+  const drawer = document.getElementById('mobile-drawer');
+  drawer.classList.toggle('open');
+}
+
+function updateMobileUserInfo(user) {
+  if (!user) return;
+  const el = document.getElementById('m-drawer-user');
+  if (el) el.textContent = user.email || '';
+  const av = document.getElementById('m-user-avatar');
+  if (av && user.picture) {
+    av.innerHTML = `<img src="${user.picture}" style="width:100%;height:100%;object-fit:cover">`;
+  }
+}
+
+// Add m-hide class to less important table columns on mobile
+function applyMobileTableClasses() {
+  if (!isMobileView()) return;
+  // Hide columns by header text on mobile
+  const hideHeaders = ['dispatch date','order date','settlement date','awb','courier','days','shipments','settlement id'];
+  document.querySelectorAll('table.dt').forEach(tbl => {
+    const headers = [...tbl.querySelectorAll('thead th')].map((th,i) => ({i, text: th.textContent.trim().toLowerCase()}));
+    headers.forEach(({i, text}) => {
+      if (hideHeaders.some(h => text.includes(h))) {
+        tbl.querySelectorAll(`tr > *:nth-child(${i+1})`).forEach(cell => cell.classList.add('m-hide'));
+      }
+    });
+  });
+}
+
+// Observe DOM changes to apply mobile classes whenever tables render
+if (isMobileView()) {
+  const _mobileObserver = new MutationObserver(() => applyMobileTableClasses());
+  window.addEventListener('DOMContentLoaded', () => {
+    const content = document.getElementById('content');
+    if (content) _mobileObserver.observe(content, { childList: true, subtree: true });
+  });
 }
 
 // ── Boot ──
