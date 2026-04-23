@@ -365,7 +365,7 @@ select.fsel:focus,input.fsearch:focus{border-color:rgba(200,240,74,.4)}
 
 <!-- ══════════════════ MAIN ══════════════════ -->
 <!-- ════════ LOGIN SCREEN ════════ -->
-<div id="login-screen" style="display:none;position:fixed;inset:0;background:#0e0e10;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:24px">
+<div id="login-screen" style="position:fixed;inset:0;background:#0e0e10;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:24px">
   <div style="text-align:center">
     <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:700;color:#c8f04a;letter-spacing:-0.5px;margin-bottom:6px">ReconLens</div>
     <div style="font-size:13px;color:#666;margin-bottom:32px">Honey Touch · Settlement Reconciliation</div>
@@ -4241,36 +4241,34 @@ function initGoogleAuth() {
   const tryInit = () => {
     if (!window.google?.accounts?.oauth2) { setTimeout(tryInit, 200); return; }
 
-    // Scope version check — clear stale session if scope changed
+    // Scope version check
     if (localStorage.getItem('rl_scope_ver') !== GDRIVE_SCOPE_VER) {
       localStorage.removeItem('rl_user');
-      
       localStorage.setItem('rl_scope_ver', GDRIVE_SCOPE_VER);
     }
 
-    // Try to restore from localStorage
-    const savedUser  = localStorage.getItem('rl_user');
-    if (savedUser) {
-      try {
-        _driveUser = JSON.parse(savedUser);
-        // Token expires in 1hr — always re-request silently on restore
-        _silentTokenRequest();
-        return;
-      } catch(e) {}
-    }
-
-    // Render sign-in button
+    // Always initialize GSI and render button first — needed for both fresh login and fallback
     google.accounts.id.initialize({
       client_id: GDRIVE_CLIENT_ID,
       callback: handleIdToken,
       auto_select: !_isMobile,
-      ux_mode: _isMobile ? 'redirect' : 'popup',
-      login_uri: window.location.href,
     });
     google.accounts.id.renderButton(
       document.getElementById('google-signin-btn'),
       { theme: 'filled_black', size: 'large', text: 'signin_with', shape: 'rectangular', width: 280 }
     );
+
+    // Try to restore session from localStorage
+    const savedUser = localStorage.getItem('rl_user');
+    if (savedUser) {
+      try {
+        _driveUser = JSON.parse(savedUser);
+        _silentTokenRequest(); // re-acquire token silently — shows button as fallback if fails
+        return;
+      } catch(e) {}
+    }
+
+    // No saved session — prompt sign-in
     if (!_isMobile) google.accounts.id.prompt();
   };
   tryInit();
@@ -4282,15 +4280,20 @@ function _silentTokenRequest() {
     scope: GDRIVE_SCOPE,
     callback: async (tokenResponse) => {
       if (tokenResponse.error) {
+        // Silent re-auth failed — clear saved state and show button
         localStorage.removeItem('rl_user');
-        
         _driveUser = null; _driveToken = null;
-        google.accounts.id.prompt();
+        document.getElementById('login-screen').style.display = 'flex';
+        document.querySelector('.main').style.display = 'none';
+        google.accounts.id.renderButton(
+          document.getElementById('google-signin-btn'),
+          { theme: 'filled_black', size: 'large', text: 'signin_with', shape: 'rectangular', width: 280 }
+        );
         return;
       }
       _driveToken = tokenResponse.access_token;
-      
       setTimeout(_silentTokenRequest, (tokenResponse.expires_in - 300) * 1000);
+      await onSignedIn();
     },
   });
   client.requestAccessToken({ prompt: '' });
