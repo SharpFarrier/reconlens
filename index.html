@@ -6049,12 +6049,8 @@ const SCOPES      = 'https://www.googleapis.com/auth/drive.file';
 const TOKEN_KEY   = 'reconlens_gtoken';
 const EMAIL_KEY   = 'reconlens_gemail';
 
-// ── Allowed emails (whitelist) ──
-const ALLOWED_EMAILS = [
-  'adityaramnani@gmail.com',
-  'aditya@sabiwabi.in',
-  // add more emails here before deploying
-];
+// ── Access controlled by Google Drive folder sharing ──
+// Grant access by sharing the Drive folder — no code changes needed
 
 const DRIVE_FILES = {
   db:               'reconlens_db.json',
@@ -6115,26 +6111,35 @@ function driveSignIn() {
         return;
       }
       _driveToken = resp.access_token;
-      // Get user email
+      // Verify access by checking if user can read the Drive folder
+      // Access is granted by sharing the folder in Google Drive — no code changes needed
       try {
-        const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        const emailResp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: { Authorization: 'Bearer ' + _driveToken }
         });
-        const info = await r.json();
+        const info = await emailResp.json();
         const email = info.email;
-        if (!ALLOWED_EMAILS.includes(email)) {
-          document.getElementById('login-error').textContent = `Access denied for ${email}. Contact admin.`;
+
+        // Try to access the folder — if this fails, user doesn't have access
+        const folderResp = await fetch(
+          `https://www.googleapis.com/drive/v3/files/${FOLDER_ID}?fields=id,name&supportsAllDrives=true`,
+          { headers: { Authorization: 'Bearer ' + _driveToken } }
+        );
+
+        if (!folderResp.ok) {
+          document.getElementById('login-error').textContent = `Access denied for ${email}. Ask the owner to share the ReconLens folder with you.`;
           document.getElementById('login-error').style.display = 'block';
           document.getElementById('login-btn').disabled = false;
           document.getElementById('login-btn').textContent = 'Sign in with Google';
           _driveToken = null;
           return;
         }
+
         localStorage.setItem(TOKEN_KEY, _driveToken);
         localStorage.setItem(EMAIL_KEY, email);
         bootWithDrive(email);
       } catch(e) {
-        document.getElementById('login-error').textContent = 'Could not verify email: ' + e.message;
+        document.getElementById('login-error').textContent = 'Could not verify access: ' + e.message;
         document.getElementById('login-error').style.display = 'block';
         document.getElementById('login-btn').disabled = false;
         document.getElementById('login-btn').textContent = 'Sign in with Google';
