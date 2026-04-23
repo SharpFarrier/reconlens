@@ -6,7 +6,7 @@
 <title>ReconLens</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://accounts.google.com/gsi/client" async></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap');
 
@@ -64,7 +64,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13
 .sf-val{font-family:var(--mono);font-size:10px;color:var(--text3)}
 
 /* ── Main ── */
-.main{margin-left:216px;min-height:100vh;display:flex;flex-direction:column}
+.main{margin-left:216px;min-height:100vh;display:none;flex-direction:column}
 .topbar{height:50px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:50;flex-shrink:0}
 .topbar-left{display:flex;align-items:center;gap:10px}
 .topbar-title{font-family:var(--serif);font-size:15px;color:var(--text);font-weight:600;letter-spacing:-.2px;}
@@ -4235,19 +4235,18 @@ let _driveUser  = null;
 const _isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
 function initGoogleAuth() {
-  document.querySelector('.main').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'flex';
+  // .main is hidden by default in CSS — login screen shows immediately
 
+  // Scope version check
+  if (localStorage.getItem('rl_scope_ver') !== GDRIVE_SCOPE_VER) {
+    localStorage.removeItem('rl_user');
+    localStorage.setItem('rl_scope_ver', GDRIVE_SCOPE_VER);
+  }
+
+  // Poll until GSI library loads (it's async)
   const tryInit = () => {
-    if (!window.google?.accounts?.oauth2) { setTimeout(tryInit, 200); return; }
+    if (!window.google?.accounts?.id) { setTimeout(tryInit, 100); return; }
 
-    // Scope version check
-    if (localStorage.getItem('rl_scope_ver') !== GDRIVE_SCOPE_VER) {
-      localStorage.removeItem('rl_user');
-      localStorage.setItem('rl_scope_ver', GDRIVE_SCOPE_VER);
-    }
-
-    // Always initialize GSI and render button first — needed for both fresh login and fallback
     google.accounts.id.initialize({
       client_id: GDRIVE_CLIENT_ID,
       callback: handleIdToken,
@@ -4258,17 +4257,16 @@ function initGoogleAuth() {
       { theme: 'filled_black', size: 'large', text: 'signin_with', shape: 'rectangular', width: 280 }
     );
 
-    // Try to restore session from localStorage
+    // Try to restore session
     const savedUser = localStorage.getItem('rl_user');
     if (savedUser) {
       try {
         _driveUser = JSON.parse(savedUser);
-        _silentTokenRequest(); // re-acquire token silently — shows button as fallback if fails
+        _silentTokenRequest();
         return;
       } catch(e) {}
     }
 
-    // No saved session — prompt sign-in
     if (!_isMobile) google.accounts.id.prompt();
   };
   tryInit();
@@ -4687,8 +4685,7 @@ function addClearButton() {
 }
 
 // ── Boot ──
-// Everything now goes through Google Sign-In → onSignedIn() → driveLoadAll()
-window.addEventListener('load', () => {
+window.addEventListener('DOMContentLoaded', () => {
   initGoogleAuth();
 });
 </script>
