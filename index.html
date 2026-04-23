@@ -4235,29 +4235,25 @@ let _driveUser  = null;
 const _isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
 function initGoogleAuth() {
-  // .main is hidden by default in CSS — login screen shows immediately
-
-  // Scope version check
   if (localStorage.getItem('rl_scope_ver') !== GDRIVE_SCOPE_VER) {
     localStorage.removeItem('rl_user');
+    localStorage.removeItem('rl_consented');
     localStorage.setItem('rl_scope_ver', GDRIVE_SCOPE_VER);
   }
 
-  // Poll until GSI library loads (it's async)
   const tryInit = () => {
     if (!window.google?.accounts?.id) { setTimeout(tryInit, 100); return; }
 
     google.accounts.id.initialize({
       client_id: GDRIVE_CLIENT_ID,
       callback: handleIdToken,
-      auto_select: !_isMobile,
+      auto_select: false,
     });
     google.accounts.id.renderButton(
       document.getElementById('google-signin-btn'),
       { theme: 'filled_black', size: 'large', text: 'signin_with', shape: 'rectangular', width: 280 }
     );
 
-    // Try to restore session
     const savedUser = localStorage.getItem('rl_user');
     if (savedUser) {
       try {
@@ -4266,8 +4262,6 @@ function initGoogleAuth() {
         return;
       } catch(e) {}
     }
-
-    if (!_isMobile) google.accounts.id.prompt();
   };
   tryInit();
 }
@@ -4311,18 +4305,21 @@ function requestDriveToken() {
     client_id: GDRIVE_CLIENT_ID,
     scope: GDRIVE_SCOPE,
     callback: async (tokenResponse) => {
-      if (tokenResponse.error) { showLoginError('Access denied: ' + tokenResponse.error); return; }
+      if (tokenResponse.error) {
+        showLoginError('Could not get Drive access: ' + tokenResponse.error);
+        return;
+      }
       _driveToken = tokenResponse.access_token;
-      
+      localStorage.setItem('rl_consented', '1');
       setTimeout(_silentTokenRequest, (tokenResponse.expires_in - 300) * 1000);
       await onSignedIn();
     },
   });
-  // Silent on both desktop and mobile if already consented
-  client.requestAccessToken({ prompt: '' });
+  // First time: show consent screen so Drive scope is explicitly granted
+  // After that: silent (already consented)
+  const prompt = localStorage.getItem('rl_consented') ? '' : 'consent';
+  client.requestAccessToken({ prompt });
 }
-
-
 
 async function onSignedIn() {
   document.getElementById('login-screen').style.display = 'none';
