@@ -6045,7 +6045,7 @@ function rerunFromBanner(btnEl) {
 // ══════════════════════════════════════════════
 const CLIENT_ID   = '801481705797-4lr6orueunsbdk5vhhe578bga4ai6lhq.apps.googleusercontent.com';
 const FOLDER_ID   = '1oCWEmCOrDYfxtQqCE7Ui-O756_HhUCpF';
-const SCOPES      = 'https://www.googleapis.com/auth/drive.file';
+const SCOPES      = 'https://www.googleapis.com/auth/drive';
 const TOKEN_KEY   = 'reconlens_gtoken';
 const EMAIL_KEY   = 'reconlens_gemail';
 
@@ -6112,7 +6112,7 @@ function driveSignIn() {
       }
       _driveToken = resp.access_token;
       // Verify access by checking if user can read the Drive folder
-      // Access is granted by sharing the folder in Google Drive — no code changes needed
+      // Access is granted by sharing the Drive folder — no code changes needed
       try {
         const emailResp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: { Authorization: 'Bearer ' + _driveToken }
@@ -6120,14 +6120,21 @@ function driveSignIn() {
         const info = await emailResp.json();
         const email = info.email;
 
-        // Try to access the folder — if this fails, user doesn't have access
-        const folderResp = await fetch(
-          `https://www.googleapis.com/drive/v3/files/${FOLDER_ID}?fields=id,name&supportsAllDrives=true`,
+        // Verify access by listing files in the folder
+        // If user has no access to the folder this will return an empty list or error
+        const q = encodeURIComponent(`'${FOLDER_ID}' in parents and trashed=false`);
+        const listResp = await fetch(
+          `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&pageSize=1`,
           { headers: { Authorization: 'Bearer ' + _driveToken } }
         );
 
-        if (!folderResp.ok) {
-          document.getElementById('login-error').textContent = `Access denied for ${email}. Ask the owner to share the ReconLens folder with you.`;
+        if (!listResp.ok) {
+          const err = await listResp.json().catch(() => ({}));
+          if (listResp.status === 403 || listResp.status === 404) {
+            document.getElementById('login-error').textContent = `Access denied for ${email}. Ask the owner to share the ReconLens folder with you.`;
+          } else {
+            document.getElementById('login-error').textContent = `Sign-in error (${listResp.status}): ${err.error?.message || 'Unknown error'}`;
+          }
           document.getElementById('login-error').style.display = 'block';
           document.getElementById('login-btn').disabled = false;
           document.getElementById('login-btn').textContent = 'Sign in with Google';
