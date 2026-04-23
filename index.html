@@ -6,7 +6,6 @@
 <title>ReconLens</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap');
 
@@ -36,6 +35,61 @@
   --serif: 'Syne', sans-serif;
   --sans: 'Geist', sans-serif;
 }
+/* ── Light mode ── */
+[data-theme="light"] {
+  --bg:      #f5f5f2;
+  --bg2:     #ffffff;
+  --bg3:     #f0efeb;
+  --bg4:     #e8e7e2;
+  --bg5:     #dddcd7;
+  --border:  rgba(0,0,0,0.07);
+  --border2: rgba(0,0,0,0.11);
+  --border3: rgba(0,0,0,0.18);
+  --text:    #1a1a18;
+  --text2:   #5a5a54;
+  --text3:   #9a9990;
+  --accent:  #5a8a00;
+  --warn:    #b87000;
+  --danger:  #c02828;
+  --info:    #1a6fb0;
+  --success: #1e7a4a;
+  --amazon:  #b06000;
+  --flipkart:#1a7ab0;
+  --d2c:     #6040c0;
+}
+[data-theme="light"] table.dt td { border-bottom-color: rgba(0,0,0,.04); }
+[data-theme="light"] table.dt tbody tr:hover td { background: var(--bg3); }
+[data-theme="light"] .bk-tbl td { border-bottom-color: rgba(0,0,0,.05); }
+[data-theme="light"] .bk-tbl tr:last-child td { border-top-color: var(--border2); }
+[data-theme="light"] .breakdown-panel { background: var(--bg3); border-top-color: var(--border); }
+[data-theme="light"] .nav-item.active { background: rgba(90,138,0,0.07); }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: var(--bg5); }
+[data-theme="light"] .logbox { background: var(--bg3); }
+[data-theme="light"] .btn-accent { color: #ffffff; }
+[data-theme="light"] .btn-accent:hover { background: #4a7800; border-color: #4a7800; color: #ffffff; }
+[data-theme="light"] .step-item.active .step-num { color: #ffffff; }
+[data-theme="light"] select.fsel, [data-theme="light"] input.fsearch { background: var(--bg2); color: var(--text); }
+[data-theme="light"] .dropzone { background: var(--bg2); }
+[data-theme="light"] .dropzone:hover, [data-theme="light"] .dropzone.over { background: rgba(90,138,0,.04); }
+[data-theme="light"] .dropzone.loaded { background: rgba(30,122,74,.04); }
+[data-theme="light"] #price-edit-modal > div { background: var(--bg2); }
+[data-theme="light"] .p-paid{background:rgba(30,122,74,.12);color:var(--success)}
+[data-theme="light"] .p-delayed{background:rgba(184,112,0,.12);color:var(--warn)}
+[data-theme="light"] .p-refund{background:rgba(192,40,40,.12);color:var(--danger)}
+[data-theme="light"] .p-partial{background:rgba(96,64,192,.12);color:var(--d2c)}
+[data-theme="light"] .p-amazon{background:rgba(176,96,0,.12);color:var(--amazon)}
+[data-theme="light"] .p-flipkart{background:rgba(26,122,176,.12);color:var(--flipkart)}
+[data-theme="light"] .p-flag{background:rgba(184,112,0,.12);color:var(--warn)}
+[data-theme="light"] .p-clean{background:rgba(30,122,74,.12);color:var(--success)}
+[data-theme="light"] .p-multi{background:rgba(26,111,176,.12);color:var(--info)}
+[data-theme="light"] .nb-warn{background:rgba(184,112,0,.12);color:var(--warn)}
+[data-theme="light"] .nb-ok{background:rgba(30,122,74,.12);color:var(--success)}
+[data-theme="light"] .nb-danger{background:rgba(192,40,40,.12);color:var(--danger)}
+[data-theme="light"] .nb-info{background:rgba(26,111,176,.12);color:var(--info)}
+[data-theme="light"] .nb-muted{background:var(--bg4);color:var(--text3)}
+[data-theme="light"] .kv-accent{color:var(--accent)}
+
+
 
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13.5px;line-height:1.5;min-height:100vh;-webkit-font-smoothing:antialiased;}
@@ -256,7 +310,98 @@ select.fsel:focus,input.fsearch:focus{border-color:rgba(200,240,74,.4)}
 .spin{display:inline-block;width:12px;height:12px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:5px}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ── Scrollbar ── */
+/* ── Universal order search ── */
+.us-section{padding:10px 14px 4px;font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);border-bottom:1px solid var(--border)}
+.us-empty{padding:20px 14px;text-align:center;color:var(--text3);font-size:12px}
+.us-order-card{padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+.us-order-card:hover{background:var(--bg3)}
+.us-order-card:last-child{border-bottom:none}
+
+/* ── Order detail overlay ── */
+.od-overlay{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.6);display:none;align-items:flex-start;justify-content:flex-end}
+.od-overlay.open{display:flex}
+.od-drawer{width:580px;max-width:95vw;height:100vh;background:var(--bg2);border-left:1px solid var(--border2);overflow-y:auto;display:flex;flex-direction:column;animation:slideIn .2s ease}
+@keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+.od-header{padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;position:sticky;top:0;background:var(--bg2);z-index:1}
+.od-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;padding:2px 6px;border-radius:4px;line-height:1}
+.od-close:hover{background:var(--bg4);color:var(--text)}
+.od-body{padding:20px;flex:1}
+.od-section{margin-bottom:24px}
+.od-section-title{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.od-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.od-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.od-grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px}
+.od-field{display:flex;flex-direction:column;gap:3px}
+.od-field-label{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)}
+.od-field-val{font-size:12px;color:var(--text2);font-family:var(--mono);word-break:break-all}
+.od-field-val.primary{color:var(--text);font-weight:600;font-size:13px}
+.od-field-val.success{color:var(--success)}
+.od-field-val.danger{color:var(--danger)}
+.od-field-val.warn{color:var(--warn)}
+.od-field-val.accent{color:var(--accent)}
+.od-txn-row{display:grid;grid-template-columns:1fr auto auto auto;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:11px;align-items:center}
+.od-txn-row:last-child{border-bottom:none;padding-top:8px;font-weight:600;border-top:1px solid var(--border2)}
+.od-txn-label{color:var(--text2)}
+.od-txn-actual{font-family:var(--mono);text-align:right;color:var(--text)}
+.od-txn-expected{font-family:var(--mono);text-align:right;color:var(--text3);font-size:10px}
+.od-txn-diff{font-family:var(--mono);text-align:right;font-size:10px;min-width:50px}
+.od-txn-neg{color:var(--danger)}
+.od-txn-pos{color:var(--warn)}
+.od-txn-ok{color:var(--text3)}
+.od-flag{padding:8px 10px;border-radius:var(--r-sm);font-size:11px;margin-bottom:6px}
+.od-flag.warn{background:rgba(240,168,50,.1);color:var(--warn);border:1px solid rgba(240,168,50,.2)}
+.od-flag.danger{background:rgba(224,83,83,.08);color:var(--danger);border:1px solid rgba(224,83,83,.2)}
+.od-flag.success{background:rgba(74,184,122,.08);color:var(--success);border:1px solid rgba(74,184,122,.2)}
+.od-awb-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px}
+.od-awb-row:last-child{border-bottom:none}
+
+.us-order-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.us-order-id{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--text)}
+.us-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 20px}
+.us-row{display:flex;flex-direction:column;gap:1px}
+.us-label{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)}
+.us-val{font-size:11px;color:var(--text2);font-family:var(--mono)}
+.us-val.accent{color:var(--accent)}
+.us-val.danger{color:var(--danger)}
+.us-val.warn{color:var(--warn)}
+.us-val.success{color:var(--success)}
+.us-divider{height:1px;background:var(--border);margin:10px 0}
+.us-txn{background:var(--bg3);border-radius:var(--r-sm);padding:10px 12px;margin-top:8px}
+.us-txn-title{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:8px}
+.us-txn-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+
+/* ── Custom datepicker ── */
+.datepicker-wrap{position:relative}
+.dp-cal{position:absolute;top:calc(100% + 4px);left:0;z-index:9999;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:12px;width:264px;box-shadow:0 8px 24px rgba(0,0,0,.25);display:none}
+.dp-cal.open{display:block}
+.dp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.dp-nav{background:none;border:none;color:var(--text2);cursor:pointer;padding:4px 8px;border-radius:4px;font-size:14px;line-height:1}
+.dp-nav:hover{background:var(--bg4);color:var(--text)}
+.dp-month-label{font-size:13px;font-weight:600;color:var(--text);cursor:pointer;padding:4px 8px;border-radius:4px}
+.dp-month-label:hover{background:var(--bg4)}
+.dp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.dp-dow{font-size:9px;font-family:var(--mono);text-transform:uppercase;color:var(--text3);text-align:center;padding:4px 0;letter-spacing:.5px}
+.dp-day{font-size:12px;text-align:center;padding:6px 2px;border-radius:4px;cursor:pointer;color:var(--text2);transition:all .1s}
+.dp-day:hover{background:var(--bg4);color:var(--text)}
+.dp-day.today{color:var(--accent);font-weight:600}
+.dp-day.selected{background:var(--accent);color:#0c0c0e;font-weight:600}
+.dp-day.in-range{background:rgba(200,240,74,.15);color:var(--text)}
+.dp-day.range-end{background:var(--accent);color:#0c0c0e;font-weight:600}
+.dp-day.other-month{color:var(--text3);opacity:.4}
+.dp-day.disabled{opacity:.25;cursor:default;pointer-events:none}
+.dp-footer{display:flex;justify-content:space-between;margin-top:10px;padding-top:8px;border-top:1px solid var(--border)}
+.dp-footer button{font-size:11px;background:none;border:none;cursor:pointer;padding:3px 8px;border-radius:4px;color:var(--text3)}
+.dp-footer button:hover{color:var(--text);background:var(--bg4)}
+.dp-footer .dp-today-btn{color:var(--accent)}
+[data-theme="light"] .dp-day.selected,[data-theme="light"] .dp-day.range-end{color:#fff}
+
+/* ── Month pills ── */
+.month-pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-family:var(--mono);cursor:pointer;border:1px solid var(--border2);color:var(--text2);background:var(--bg3);transition:all .12s;white-space:nowrap;user-select:none}
+.month-pill:hover{border-color:var(--border3);color:var(--text)}
+.month-pill.active{background:var(--accent);color:#0c0c0e;border-color:var(--accent);font-weight:600}
+[data-theme="light"] .month-pill.active{color:#fff}
+
+
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--bg5);border-radius:2px}
@@ -435,6 +580,7 @@ select.fsel:focus,input.fsearch:focus{border-color:rgba(200,240,74,.4)}
 #mobile-topbar { display: none; }
 #mobile-drawer { display: none; }
 </style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
@@ -483,7 +629,7 @@ select.fsel:focus,input.fsearch:focus{border-color:rgba(200,240,74,.4)}
     </div>
     <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">
       <div id="m-drawer-user" style="font-size:11px;color:var(--text3);margin-bottom:10px"></div>
-      <button onclick="signOut()" style="width:100%;padding:8px;font-size:12px;color:var(--text3);background:none;border:1px solid var(--border);border-radius:6px;cursor:pointer">Sign out</button>
+      <button onclick="driveSignOut()" style="width:100%;padding:8px;font-size:12px;color:var(--text3);background:none;border:1px solid var(--border);border-radius:6px;cursor:pointer">Sign out</button>
       <button onclick="refreshFromDrive();toggleMobileDrawer()" style="width:100%;padding:8px;margin-top:6px;font-size:12px;color:var(--accent);background:none;border:1px solid var(--accent);border-radius:6px;cursor:pointer">↻ Refresh from Drive</button>
     </div>
   </div>
@@ -586,15 +732,8 @@ select.fsel:focus,input.fsearch:focus{border-color:rgba(200,240,74,.4)}
   <div class="sidebar-foot">
     <div class="sf-label" id="sf-label">No data</div>
     <div class="sf-val" id="sf-val">Upload to begin</div>
-    <div id="user-info" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:none">
-      <div style="display:flex;align-items:center;gap:8px">
-        <img id="user-avatar" style="width:24px;height:24px;border-radius:50%;display:none" src="">
-        <div style="flex:1;min-width:0">
-          <div id="user-name" style="font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
-          <div id="user-email" style="font-size:9px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
-        </div>
       </div>
-      <button onclick="signOut()" style="margin-top:8px;width:100%;padding:4px;font-size:10px;color:var(--text3);background:none;border:1px solid var(--border);border-radius:4px;cursor:pointer">Sign out</button>
+      <button onclick="driveSignOut()" style="margin-top:8px;width:100%;padding:4px;font-size:10px;color:var(--text3);background:none;border:1px solid var(--border);border-radius:4px;cursor:pointer">Sign out</button>
       <button onclick="refreshFromDrive()" style="margin-top:4px;width:100%;padding:4px;font-size:10px;color:var(--accent);background:none;border:1px solid var(--accent);border-radius:4px;cursor:pointer">↻ Refresh from Drive</button>
     </div>
   </div>
@@ -602,29 +741,30 @@ select.fsel:focus,input.fsearch:focus{border-color:rgba(200,240,74,.4)}
 
 <!-- ══════════════════ MAIN ══════════════════ -->
 <!-- ════════ LOGIN SCREEN ════════ -->
-<div id="login-screen" style="position:fixed;inset:0;background:#0e0e10;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:24px">
-  <div style="text-align:center">
-    <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:700;color:#c8f04a;letter-spacing:-0.5px;margin-bottom:6px">ReconLens</div>
-    <div style="font-size:13px;color:#666;margin-bottom:32px">Honey Touch · Settlement Reconciliation</div>
-    <div id="google-signin-btn"></div>
-    <div id="login-error" style="margin-top:16px;font-size:12px;color:#e05353;display:none"></div>
-  </div>
-  <div style="font-size:11px;color:#444;text-align:center;max-width:320px">
-    Sign in with the Google account that has access to the ReconLens Drive folder
-  </div>
+<div id="login-screen" style="display:none;position:fixed;inset:0;z-index:99999;background:var(--bg);align-items:center;justify-content:center;flex-direction:column;gap:16px">
+  <div style="font-family:var(--serif);font-size:28px;font-weight:700;color:var(--text);letter-spacing:-.5px">ReconLens</div>
+  <div style="font-size:12px;color:var(--text3);margin-bottom:8px">Settlement reconciliation for Honey Touch</div>
+  <button id="login-btn" class="btn btn-accent" style="padding:10px 24px;font-size:13px" onclick="driveSignIn()">Sign in with Google</button>
+  <div id="login-error" style="font-size:11px;color:var(--danger);display:none"></div>
 </div>
 
 <!-- ════════ SYNC INDICATOR ════════ -->
-<div id="sync-indicator" style="position:fixed;bottom:16px;right:16px;z-index:8888;font-size:11px;font-family:var(--mono);padding:6px 12px;border-radius:6px;background:var(--bg3);border:1px solid var(--border);display:none;align-items:center;gap:6px">
-  <span id="sync-dot" style="width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block"></span>
-  <span id="sync-text">Saving…</span>
-</div>
+<div id="sync-indicator" style="display:none;position:fixed;bottom:16px;right:16px;z-index:8000;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-sm);padding:6px 12px;font-size:11px;color:var(--text2);font-family:var(--mono)"></div>
 
 <div class="main">
   <div class="topbar">
     <div class="topbar-left">
       <div class="topbar-title" id="topbar-title">Upload & Process</div>
       <div class="topbar-sub" id="topbar-sub"></div>
+    </div>
+    <div style="flex:1;display:flex;justify-content:center;padding:0 16px">
+      <div style="position:relative;width:100%;max-width:340px" id="usearch-wrap">
+        <input id="usearch-input" class="fsearch" placeholder="🔍 Search order ID, AWB, SKU…"
+          style="width:100%;padding-left:12px;padding-right:32px;font-size:12px"
+          oninput="uSearchInput(this.value)" onkeydown="if(event.key==='Escape')uSearchClose()"
+          autocomplete="off">
+        <div id="usearch-results" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);z-index:9999;max-height:80vh;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.3)"></div>
+      </div>
     </div>
     <div class="topbar-right" id="topbar-actions"></div>
   </div>
@@ -796,7 +936,7 @@ select.fsel:focus,input.fsearch:focus{border-color:rgba(200,240,74,.4)}
             <option value="">All</option>
             <option value="Amazon">Amazon</option>
             <option value="Flipkart">Flipkart</option>
-            <option value="Internal">Internal/D2C</option>
+            <option value="Website">Website/D2C</option>
           </select>
           <label>Status</label>
           <select class="fsel" id="md-status" onchange="renderMasterTable()">
@@ -831,7 +971,7 @@ select.fsel:focus,input.fsearch:focus{border-color:rgba(200,240,74,.4)}
             <option value="">All</option>
             <option value="Amazon">Amazon</option>
             <option value="Flipkart">Flipkart</option>
-            <option value="Internal">Internal/D2C</option>
+            <option value="Website">Website/D2C</option>
           </select>
           <label>Shipments</label>
           <select class="fsel" id="of-shipments" onchange="renderOrdersTable()">
@@ -858,7 +998,18 @@ select.fsel:focus,input.fsearch:focus{border-color:rgba(200,240,74,.4)}
         </div>
 
         <div class="sec"><h2>Dispatched orders</h2><div class="line"></div><span class="sec-sub">Orders from your dispatch log · click any row to see deduction breakdown</span></div>
+
+        <!-- Stale banner -->
+        <div id="recon-stale-banner" style="display:none;align-items:center;gap:10px;padding:10px 14px;background:rgba(240,168,50,.1);border:1px solid rgba(240,168,50,.25);border-radius:6px;margin-bottom:12px">
+          <span style="font-size:13px">⚠</span>
+          <span style="font-size:12px;color:var(--warn);flex:1">A discount event was added or removed. Re-run reconciliation to apply updated pricing.</span>
+          <button class="btn btn-sm" style="border-color:var(--warn);color:var(--warn)" onclick="rerunFromBanner(this)">↺ Re-run now</button>
+        </div>
         <div class="filters">
+          <label>Month</label>
+          <select class="fsel" id="rf-month" onchange="renderDispatchedTable()">
+            <option value="">All months</option>
+          </select>
           <label>Status</label>
           <select class="fsel" id="rf-status" onchange="renderDispatchedTable()">
             <option value="">All</option>
@@ -873,9 +1024,10 @@ select.fsel:focus,input.fsearch:focus{border-color:rgba(200,240,74,.4)}
             <option value="">All</option>
             <option value="Amazon">Amazon</option>
             <option value="Flipkart">Flipkart</option>
-            <option value="Internal">Internal/D2C</option>
+            <option value="Website">Website/D2C</option>
           </select>
           <input class="fsearch" id="rf-search" placeholder="Order no / SKU / AWB" oninput="renderDispatchedTable()">
+          <button class="btn btn-sm" onclick="exportReconCSV()" style="margin-left:auto" title="Export filtered rows to CSV">⬇ Export CSV</button>
         </div>
         <div id="recon-dispatched"></div>
 
@@ -894,7 +1046,7 @@ select.fsel:focus,input.fsearch:focus{border-color:rgba(200,240,74,.4)}
             <option value="">All</option>
             <option value="Amazon">Amazon</option>
             <option value="Flipkart">Flipkart</option>
-            <option value="Internal">Internal/D2C</option>
+            <option value="Website">Website/D2C</option>
           </select>
           <label>Min days</label>
           <input class="fsearch" type="number" id="df-days" placeholder="7" oninput="renderDelayed()" style="width:70px">
@@ -910,7 +1062,18 @@ select.fsel:focus,input.fsearch:focus{border-color:rgba(200,240,74,.4)}
       <div id="accuracy-body" style="display:none">
         <div class="kpis" id="accuracy-kpis"></div>
         <div class="sec"><h2>Payment accuracy check</h2><div class="line"></div><span class="sec-sub">Paid orders where received amount ≠ expected amount</span></div>
+
+        <!-- Stale banner -->
+        <div id="accuracy-stale-banner" style="display:none;align-items:center;gap:10px;padding:10px 14px;background:rgba(240,168,50,.1);border:1px solid rgba(240,168,50,.25);border-radius:6px;margin-bottom:12px">
+          <span style="font-size:13px">⚠</span>
+          <span style="font-size:12px;color:var(--warn);flex:1">A discount event was added or removed. Re-run reconciliation to apply updated pricing.</span>
+          <button class="btn btn-sm" style="border-color:var(--warn);color:var(--warn)" onclick="rerunFromBanner(this)">↺ Re-run now</button>
+        </div>
         <div class="filters">
+          <label>Month</label>
+          <select class="fsel" id="acf-month" onchange="renderAccuracy()">
+            <option value="">All months</option>
+          </select>
           <label>Issue</label>
           <select class="fsel" id="acf-type" onchange="renderAccuracy()">
             <option value="">All</option>
@@ -918,6 +1081,7 @@ select.fsel:focus,input.fsearch:focus{border-color:rgba(200,240,74,.4)}
             <option value="Overpaid">Overpaid</option>
             <option value="Fee Anomaly">Fee Anomaly</option>
             <option value="Price Mismatch">Price Mismatch</option>
+            <option value="Shipping Anomaly">Shipping Anomaly</option>
             <option value="Possible Missing Settlement">Missing Settlement</option>
           </select>
           <label>Platform</label>
@@ -927,6 +1091,7 @@ select.fsel:focus,input.fsearch:focus{border-color:rgba(200,240,74,.4)}
             <option value="Flipkart">Flipkart</option>
           </select>
           <input class="fsearch" id="acf-search" placeholder="Order ID / SKU" oninput="renderAccuracy()">
+          <button class="btn btn-sm" onclick="exportAccuracyCSV()" style="margin-left:auto" title="Export filtered rows to CSV">⬇ Export CSV</button>
         </div>
         <div id="accuracy-table"></div>
       </div>
@@ -990,7 +1155,7 @@ select.fsel:focus,input.fsearch:focus{border-color:rgba(200,240,74,.4)}
             <option value="">All</option>
             <option value="Amazon">Amazon</option>
             <option value="Flipkart">Flipkart</option>
-            <option value="Internal">Internal/D2C</option>
+            <option value="Website">Website/D2C</option>
           </select>
           <input class="fsearch" id="flf-search" placeholder="Order ID / SKU" oninput="renderFlags()">
         </div>
@@ -1081,11 +1246,12 @@ select.fsel:focus,input.fsearch:focus{border-color:rgba(200,240,74,.4)}
       <div class="card" style="max-width:700px;margin-bottom:20px">
         <div class="card-title">Upload pricing CSV</div>
         <div style="font-size:11px;color:var(--text3);margin-bottom:12px">Export your Google Sheet as CSV. Expected columns: <span style="font-family:var(--mono);color:var(--text2)">SKU, New Price</span> (plus any of: Variation Family, Product Title, ASIN, Flipkart SKU, Website SKU)</div>
-        <div style="display:flex;gap:10px;align-items:center">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <label class="btn btn-sm" style="cursor:pointer">
             Choose file
             <input type="file" accept=".csv" id="pricing-file-input" style="display:none" onchange="loadPricingFile(this)">
           </label>
+          <button class="btn btn-sm btn-danger" onclick="clearPricingData()" style="padding:4px 10px">✕ Clear pricing data</button>
           <span id="pricing-file-status" style="font-size:11px;color:var(--text3)">No file loaded</span>
         </div>
       </div>
@@ -1104,7 +1270,7 @@ select.fsel:focus,input.fsearch:focus{border-color:rgba(200,240,74,.4)}
 
     <!-- ════════ DISCOUNT EVENTS PAGE ════════ -->
     <div class="page" id="page-discounts">
-      <div class="sec"><h2>Discount events</h2><div class="line"></div><span class="sec-sub">Define sale campaigns with per-SKU discount % · drives expected price calculation in reconciliation</span></div>
+      <div class="sec"><h2>Discount events</h2><div class="line"></div><span class="sec-sub">Define sale campaigns · drives expected price calculation in reconciliation</span></div>
 
       <!-- Create new event -->
       <div class="card" style="max-width:860px;margin-bottom:20px" id="de-create-card">
@@ -1124,47 +1290,74 @@ select.fsel:focus,input.fsearch:focus{border-color:rgba(200,240,74,.4)}
           </div>
           <div>
             <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Start date</div>
-            <input class="fsearch" id="de-start" type="date" style="width:100%">
+            <div class="datepicker-wrap" id="de-start-wrap">
+              <input class="fsearch datepicker-input" id="de-start" readonly placeholder="Select date" style="width:100%;cursor:pointer" onclick="dpOpen('de-start-wrap')">
+            </div>
           </div>
           <div>
             <div style="font-size:11px;color:var(--text2);margin-bottom:4px">End date</div>
-            <input class="fsearch" id="de-end" type="date" style="width:100%">
+            <div class="datepicker-wrap" id="de-end-wrap">
+              <input class="fsearch datepicker-input" id="de-end" readonly placeholder="Select date" style="width:100%;cursor:pointer" onclick="dpOpen('de-end-wrap')">
+            </div>
           </div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
-          <div>
-            <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Platform reward rate % <span style="color:var(--text3)">(reduced commission during event)</span></div>
-            <input class="fsearch" id="de-reward" type="number" step="0.1" placeholder="e.g. 12.5" style="width:100%">
-          </div>
-          <div>
-            <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Notes</div>
-            <input class="fsearch" id="de-notes" placeholder="Campaign details, coupon code…" style="width:100%">
+        <div style="margin-bottom:16px">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Notes</div>
+          <input class="fsearch" id="de-notes" placeholder="Campaign details, coupon code…" style="width:100%">
+        </div>
+
+        <!-- Mode toggle -->
+        <div class="card-title" style="margin-bottom:10px">Discount type</div>
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <button class="btn btn-sm" id="de-mode-overall" onclick="deSetMode('overall')"
+            style="background:var(--accent);color:#0c0c0e;border-color:var(--accent)">
+            Overall discount
+          </button>
+          <button class="btn btn-sm" id="de-mode-persku" onclick="deSetMode('persku')">
+            Per-SKU discount
+          </button>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:14px" id="de-mode-desc">
+          One discount % applies to all SKUs in this event window. Every order during this period will use this discount.
+        </div>
+
+        <!-- Overall mode -->
+        <div id="de-overall-section">
+          <div style="display:flex;gap:12px;align-items:flex-end">
+            <div>
+              <div style="font-size:11px;color:var(--text2);margin-bottom:3px">Discount % (applied to all SKUs)</div>
+              <input class="fsearch" id="de-overall-pct" type="number" step="0.1" placeholder="e.g. 10" style="width:160px">
+            </div>
           </div>
         </div>
 
-        <!-- Per-SKU discount entry -->
-        <div class="card-title" style="margin-bottom:10px">SKU discounts</div>
-        <div style="font-size:11px;color:var(--text3);margin-bottom:10px">
-          Add each SKU and its discount % for this event. Or upload a CSV with columns: <span style="font-family:var(--mono);color:var(--text2)">sku, discount_pct</span>
-        </div>
-        <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:10px;flex-wrap:wrap">
-          <div>
-            <div style="font-size:11px;color:var(--text2);margin-bottom:3px">SKU</div>
-            <input class="fsearch" id="de-sku" placeholder="e.g. HT-R-B-B-36-1IN" style="width:200px">
+        <!-- Per-SKU mode -->
+        <div id="de-persku-section" style="display:none">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:10px">
+            Add each SKU and its individual discount %. Or upload a CSV with columns: <span style="font-family:var(--mono);color:var(--text2)">sku, discount_pct</span>
           </div>
-          <div>
-            <div style="font-size:11px;color:var(--text2);margin-bottom:3px">Discount %</div>
-            <input class="fsearch" id="de-sku-pct" type="number" step="0.1" placeholder="e.g. 15" style="width:100px">
+          <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:10px;flex-wrap:wrap">
+            <div>
+              <div style="font-size:11px;color:var(--text2);margin-bottom:3px">SKU</div>
+              <input class="fsearch" id="de-sku" placeholder="e.g. HT-R-B-B-36-1IN" style="width:200px">
+            </div>
+            <div>
+              <div style="font-size:11px;color:var(--text2);margin-bottom:3px">Discount %</div>
+              <input class="fsearch" id="de-sku-pct" type="number" step="0.1" placeholder="e.g. 15" style="width:100px">
+            </div>
+            <button class="btn btn-sm" onclick="deAddSkuRow()">+ Add SKU</button>
+            <label class="btn btn-sm" style="cursor:pointer;margin-left:8px">
+              Upload CSV
+              <input type="file" accept=".csv" id="de-csv-input" style="display:none" onchange="deLoadCsv(this)">
+            </label>
+            <span id="de-csv-status" style="font-size:10px;color:var(--text3)"></span>
           </div>
-          <button class="btn btn-sm" onclick="deAddSkuRow()">+ Add SKU</button>
-          <label class="btn btn-sm" style="cursor:pointer;margin-left:8px">
-            Upload CSV
-            <input type="file" accept=".csv" id="de-csv-input" style="display:none" onchange="deLoadCsv(this)">
-          </label>
-          <span id="de-csv-status" style="font-size:10px;color:var(--text3)"></span>
+          <div id="de-sku-preview" style="max-height:200px;overflow-y:auto;margin-bottom:14px"></div>
         </div>
-        <div id="de-sku-preview" style="max-height:200px;overflow-y:auto;margin-bottom:14px"></div>
-        <button class="btn" onclick="saveDiscountEvent()">Save event</button>
+
+        <div style="margin-top:16px">
+          <button class="btn" onclick="saveDiscountEvent()">Save event</button>
+        </div>
       </div>
 
       <!-- Events list -->
@@ -1172,6 +1365,41 @@ select.fsel:focus,input.fsearch:focus{border-color:rgba(200,240,74,.4)}
     </div>
 
 </div><!-- /main -->
+
+<!-- ════════ ORDER DETAIL OVERLAY ════════ -->
+<div class="od-overlay" id="od-overlay" onclick="if(event.target===this)odClose()">
+  <div class="od-drawer" id="od-drawer">
+    <div class="od-header">
+      <div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:4px">Order detail</div>
+        <div style="font-family:var(--mono);font-size:14px;font-weight:600;color:var(--text)" id="od-order-id">—</div>
+      </div>
+      <button class="od-close" onclick="odClose()">✕</button>
+    </div>
+    <div class="od-body" id="od-body"></div>
+  </div>
+</div>
+
+<!-- ════════ PRICE EDIT MODAL ════════ -->
+<div id="price-edit-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.6);align-items:center;justify-content:center">
+  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:24px;width:380px;max-width:90vw">
+    <div style="font-family:var(--syne);font-size:15px;font-weight:600;margin-bottom:4px">Edit price</div>
+    <div id="pe-sku-label" style="font-family:var(--mono);font-size:11px;color:var(--accent);margin-bottom:16px"></div>
+    <div style="margin-bottom:12px">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:4px">New price (₹)</div>
+      <input id="pe-price" type="number" class="fsearch" placeholder="e.g. 6499" style="width:100%">
+    </div>
+    <div style="margin-bottom:16px">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Effective from</div>
+      <input id="pe-date" type="date" class="fsearch" style="width:100%">
+      <div style="font-size:10px;color:var(--text3);margin-top:4px">The old price will be closed on this date and the new price will start</div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-sm" onclick="closePriceEdit()" style="background:none;border:1px solid var(--border)">Cancel</button>
+      <button class="btn" onclick="savePriceEdit()">Save price</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ══════════════════════════════════════════════
@@ -1191,6 +1419,7 @@ const DB = {
   amazonSettlements: [],
   flipkartLedger: [],
   flipkartNeft: [],
+  d2cRaw: [],              // Razorpay payment rows
   reconOutput: [],         // {order_no, platform, status, settled_amount, days, shipments, is_replacement}
   flags: [],
   accuracyFlags: [],       // {order_no, platform, sku, expected, actual, diff, issue_type}
@@ -1283,6 +1512,63 @@ function parseCSV(text) {
   });
 }
 
+// ── Razorpay payment parser ──
+function parseRazorpayRows(rows) {
+  const parsed = [];
+  rows.forEach(r => {
+    // Extract merchant_order_id from notes — XLSX.js may return as string or object
+    let merchant_order_id = '';
+    const notes = r.notes || r.Notes || '';
+    if (notes) {
+      try {
+        // If already an object (XLSX.js sometimes auto-parses JSON)
+        const nd = (typeof notes === 'object') ? notes : JSON.parse(String(notes));
+        merchant_order_id = String(nd.merchant_order_id || nd.order_id || nd.orderId || '').trim();
+      } catch(e) {
+        // Plain string fallback — extract first 4-6 digit number
+        const m = String(notes).match(/["']?merchant_order_id["']?\s*:\s*["']?(\d{4,6})["']?/);
+        if (m) merchant_order_id = m[1];
+        else {
+          const m2 = String(notes).match(/\b(\d{4,6})\b/);
+          if (m2) merchant_order_id = m2[1];
+        }
+      }
+    }
+    // Fallback: check description or order_id column
+    if (!merchant_order_id) {
+      const desc = String(r.description || r.Description || '');
+      const m = desc.match(/\b(\d{4,6})\b/);
+      if (m) merchant_order_id = m[1];
+    }
+    if (!merchant_order_id && r.order_id && /^\d{4,6}$/.test(String(r.order_id).trim())) {
+      merchant_order_id = String(r.order_id).trim();
+    }
+
+    const amount   = parseFloat(r.amount || r.Amount || 0) || 0;
+    const fee      = parseFloat(r.fee    || r.Fee    || 0) || 0;
+    const tax      = parseFloat(r.tax    || r.Tax    || 0) || 0;
+    const refunded = parseFloat(r.amount_refunded || 0) || 0;
+    const status   = String(r.status || r.Status || '').toLowerCase().trim();
+
+    // Only keep captured and refunded rows
+    if (status !== 'captured' && status !== 'refunded') return;
+
+    parsed.push({
+      payment_id:       String(r.id || '').trim(),
+      merchant_order_id,
+      amount, fee, tax,
+      amount_refunded:  refunded,
+      net_settlement:   amount - fee - tax - refunded,
+      status,
+      refund_status:    String(r.refund_status || ''),
+      method:           String(r.method || ''),
+      created_at:       String(r.created_at || ''),
+      email:            String(r.email || ''),
+    });
+  });
+  return parsed;
+}
+
 function parseTSV(text) {
   const lines = text.split('\n').filter(l=>l.trim());
   if (!lines.length) return [];
@@ -1302,7 +1588,7 @@ function detectPlatform(orderNo) {
   const s = String(orderNo||'').trim();
   if (/^\d{3}-\d{7}-\d{7}$/.test(s) || /^1\d{2}-\d{7}-\d{7}$/.test(s)) return 'Amazon';
   if (s.startsWith('OD')) return 'Flipkart';
-  if (/^\d{4,6}$/.test(s)) return 'Internal';
+  if (/^\d{4,6}$/.test(s)) return 'Website';
   return 'Unknown';
 }
 
@@ -1312,6 +1598,27 @@ function detectPlatform(orderNo) {
 async function loadOrders(file) {
   if (!file) return;
   const text = await readText(file);
+
+  // Dispatch dedup: hash the file content to detect re-uploads
+  const hashVal = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
+    .then(buf => [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('').substring(0,16))
+    .catch(() => null);
+
+  if (hashVal) {
+    const reg = getRegistry();
+    if (reg.dispatch.has(hashVal)) {
+      const force = confirm(
+        `⚠ This dispatch file appears to have been uploaded before.\n\nFile: ${file.name}\n\nLoad it again anyway?\n\n(This may cause duplicate orders in reconciliation)`
+      );
+      if (!force) {
+        log('Dispatch file upload cancelled — duplicate detected', 'warn');
+        return;
+      }
+    }
+    reg.dispatch.add(hashVal);
+    saveRegistry(reg);
+  }
+
   const rows = parseCSV(text);
 
   DB.ordersRaw = [];
@@ -1335,22 +1642,26 @@ async function loadOrders(file) {
     DB.shipments[orderNo].push({awb, sku, masterSku, courier, date});
 
     if (!DB.ordersIndex[orderNo]) {
-      DB.ordersIndex[orderNo] = {orderNo, platform, firstDate: date, skus: new Set()};
+      DB.ordersIndex[orderNo] = {orderNo, platform, firstDate: date, skus: new Set(), allDates: new Set()};
     }
     DB.ordersIndex[orderNo].skus.add(sku);
+    if (date) DB.ordersIndex[orderNo].allDates.add(date);
   });
 
   // Flatten ordersIndex
   Object.values(DB.ordersIndex).forEach(o => {
     o.skus = [...o.skus];
+    o.allDates = [...(o.allDates || new Set())].sort();
+    o.hasDuplicateDispatch = o.allDates.length > 1;
     o.shipmentCount = DB.shipments[o.orderNo].length;
   });
 
   DB.ordersLoaded = true;
   const total = Object.keys(DB.ordersIndex).length;
   const multi = Object.values(DB.ordersIndex).filter(o=>o.shipmentCount>1).length;
+  const dupDisp = Object.values(DB.ordersIndex).filter(o=>o.hasDuplicateDispatch).length;
 
-  dzSetLoaded('orders', `${file.name} · ${total} orders · ${multi} multi-shipment`);
+  dzSetLoaded('orders', `${file.name} · ${total} orders · ${multi} multi-shipment${dupDisp ? ` · ⚠ ${dupDisp} duplicate dispatch` : ''}`);
   document.getElementById('btn-step1-next').disabled = false;
   document.getElementById('btn-clear-orders').style.display = 'inline-flex';
 
@@ -1401,18 +1712,57 @@ async function loadPayment(platform, files) {
   if (platform === 'amazon') {
     DB.amazonRaw = [];
     let totalRows = 0;
+    const reg = getRegistry();
+    const newIds = new Set();
+    const dupIds = [];
+
     for (const f of arr) {
       if (!f.name.endsWith('.txt')) continue;
       const text = await readText(f);
       const rows = parseTSV(text);
+      // Extract settlement ID from first header row
+      const settleId = rows[0]?.['settlement-id'] || rows.find(r => r['settlement-id'])?.['settlement-id'];
+      if (settleId) {
+        if (reg.amazon.has(String(settleId))) {
+          dupIds.push({ id: settleId, file: f.name });
+          continue; // skip this file
+        }
+        newIds.add(String(settleId));
+      }
       rows.forEach(r => {
         r._amount = parseFloat(r.amount)||0;
         DB.amazonRaw.push(r);
       });
       totalRows += rows.length;
     }
+
+    if (dupIds.length) {
+      const names = dupIds.map(d => `${d.file} (settlement ${d.id})`).join('\n');
+      const force = confirm(
+        `⚠ Duplicate settlement detected:\n\n${names}\n\nThese files were already processed. Load them again anyway?\n\n(This may cause double-counting)`
+      );
+      if (force) {
+        // Re-process duplicates
+        for (const d of dupIds) {
+          const f = arr.find(f => f.name === d.file);
+          if (!f) continue;
+          const text = await readText(f);
+          const rows = parseTSV(text);
+          rows.forEach(r => { r._amount = parseFloat(r.amount)||0; DB.amazonRaw.push(r); });
+          totalRows += rows.length;
+          newIds.add(String(d.id));
+        }
+      } else {
+        log(`Skipped ${dupIds.length} duplicate Amazon settlement file(s)`, 'warn');
+      }
+    }
+
+    // Register new IDs
+    newIds.forEach(id => reg.amazon.add(id));
+    saveRegistry(reg);
+
     DB.amazonLoaded = true;
-    dzSetLoaded('amazon', `${arr.length} file(s) · ${totalRows} rows`);
+    dzSetLoaded('amazon', `${arr.length} file(s) · ${totalRows} rows${dupIds.length ? ` · ${dupIds.length} duplicate(s) skipped` : ''}`);
     document.getElementById('amazon-pay-meta').textContent =
       `Orders: ${[...new Set(DB.amazonRaw.filter(r=>r['order-id']).map(r=>r['order-id']))].length}`;
   }
@@ -1420,19 +1770,39 @@ async function loadPayment(platform, files) {
   else if (platform === 'flipkart') {
     DB.flipkartRaw = [];
     let totalOrders = 0;
+    const reg = getRegistry();
+    const newNefts = new Set();
+    const dupFiles = [];
+
     for (const f of arr) {
       if (!f.name.endsWith('.xlsx')) continue;
       const buf = await readBuf(f);
       const wb = XLSX.read(buf, {type:'array'});
       const ws = wb.Sheets[wb.SheetNames.find(n=>n==='Orders')||wb.SheetNames[0]];
       const raw = XLSX.utils.sheet_to_json(ws, {header:1});
-      // find header row
       let hi = -1;
       for (let i=0;i<Math.min(raw.length,5);i++) {
         if (raw[i]&&raw[i].some(c=>String(c||'').includes('Order item ID'))) { hi=i; break; }
       }
       if (hi===-1) continue;
       const headers = raw[hi].map(h=>String(h||'').trim().replace(/\n/g,' ').replace(/\r/g,''));
+
+      // Extract unique NEFT IDs from this file
+      const neftIdx = headers.indexOf('NEFT ID');
+      const fileNefts = new Set();
+      raw.slice(hi+1).forEach(row => {
+        const neft = neftIdx >= 0 ? String(row[neftIdx]||'').trim() : '';
+        if (neft) fileNefts.add(neft);
+      });
+
+      // Check for duplicates
+      const dupNefts = [...fileNefts].filter(n => reg.flipkart.has(n));
+      if (dupNefts.length && dupNefts.length === fileNefts.size) {
+        // All NEFTs in this file are duplicates
+        dupFiles.push({ file: f.name, nefts: dupNefts });
+        continue;
+      }
+
       const bankCol = headers.find(h=>h.includes('Bank Settlement Value'));
       raw.slice(hi+1).forEach(row=>{
         if (!row||row.length<4) return;
@@ -1446,11 +1816,10 @@ async function loadPayment(platform, files) {
           payment_date:    String(obj['Payment Date']||''),
           bank_settlement: parseFloat(obj[bankCol]||0)||0,
           sku:             String(obj['Seller SKU']||'').trim(),
-          return_type:     (v => (v==='Customer Return'||v==='Logistics Return') ? v : null)(String(obj['Return Type']??'').trim()),
+          return_type:     (v=>(v==='Customer Return'||v==='Logistics Return')?v:null)(String(obj['Return Type']??'').trim()),
           order_id:        String(obj['Order ID']||'').trim(),
           order_date:      String(obj['Order Date']||''),
           qty:             parseFloat(obj['Quantity']||1)||1,
-          // financials
           sale_amount:     parseFloat(obj['Sale Amount']||obj['Sale Amount (Rs.)'||0])||0,
           commission_rate: parseFloat(obj['Commission Rate (%)'||0])||0,
           commission:      parseFloat(obj['Commission (Rs.)'||0])||0,
@@ -1462,14 +1831,66 @@ async function loadPayment(platform, files) {
           mp_fee:          parseFloat(obj['Marketplace Fee (Rs.) = SUM (U:AH)'||0])||0,
           taxes:           parseFloat(obj['Taxes (Rs.)'||0])||0,
           offer_adj:       parseFloat(obj['Offer Adjustments (Rs.)'||0])||0,
+          total_offer:     parseFloat(obj['Total Offer Amount (Rs.)']||0)||0,
           refund:          parseFloat(obj['Refund (Rs.)'||0])||0,
           subcat:          String(obj['Product Sub Category']||'').trim(),
         });
         totalOrders++;
       });
+      fileNefts.forEach(n => newNefts.add(n));
     }
+
+    if (dupFiles.length) {
+      const names = dupFiles.map(d => `${d.file} (NEFTs: ${d.nefts.slice(0,2).join(', ')}${d.nefts.length>2?` +${d.nefts.length-2} more`:''})`).join('\n');
+      const force = confirm(`⚠ Duplicate Flipkart settlement detected:\n\n${names}\n\nThese NEFT IDs were already processed. Load again anyway?`);
+      if (force) {
+        for (const d of dupFiles) {
+          const f = arr.find(f2 => f2.name === d.file);
+          if (!f) continue;
+          const buf2 = await readBuf(f);
+          const wb2  = XLSX.read(buf2, {type:'array'});
+          const ws2  = wb2.Sheets[wb2.SheetNames.find(n=>n==='Orders')||wb2.SheetNames[0]];
+          const raw2 = XLSX.utils.sheet_to_json(ws2, {header:1});
+          let hi2 = -1;
+          for (let i=0;i<Math.min(raw2.length,5);i++) {
+            if (raw2[i]&&raw2[i].some(c=>String(c||'').includes('Order item ID'))) { hi2=i; break; }
+          }
+          if (hi2===-1) continue;
+          const hdr2 = raw2[hi2].map(h=>String(h||'').trim().replace(/\n/g,' ').replace(/\r/g,''));
+          const bank2 = hdr2.find(h=>h.includes('Bank Settlement Value'));
+          raw2.slice(hi2+1).forEach(row=>{
+            if (!row||row.length<4) return;
+            const o={};
+            hdr2.forEach((h,i)=>o[h]=row[i]!==undefined?row[i]:'');
+            const oid2=String(o['Order item ID']||'').trim();
+            if (!oid2||oid2==='Order item ID') return;
+            DB.flipkartRaw.push({
+              order_item_id:oid2, neft_id:String(o['NEFT ID']||'').trim(),
+              payment_date:String(o['Payment Date']||''), bank_settlement:parseFloat(o[bank2]||0)||0,
+              sku:String(o['Seller SKU']||'').trim(),
+              return_type:(v=>(v==='Customer Return'||v==='Logistics Return')?v:null)(String(o['Return Type']??'').trim()),
+              order_id:String(o['Order ID']||'').trim(), order_date:String(o['Order Date']||''),
+              qty:parseFloat(o['Quantity']||1)||1, sale_amount:parseFloat(o['Sale Amount']||o['Sale Amount (Rs.)'||0])||0,
+              commission_rate:parseFloat(o['Commission Rate (%)'||0])||0, commission:parseFloat(o['Commission (Rs.)'||0])||0,
+              gst_on_fees:parseFloat(o['GST on MP Fees (Rs.)'||0])||0, fixed_fee:parseFloat(o['Fixed Fee  (Rs.)'||0])||0,
+              collection_fee:parseFloat(o['Collection Fee (Rs.)'||0])||0, tcs:parseFloat(o['TCS (Rs.)'||0])||0,
+              tds:parseFloat(o['TDS (Rs.)'||0])||0, mp_fee:parseFloat(o['Marketplace Fee (Rs.) = SUM (U:AH)'||0])||0,
+              taxes:parseFloat(o['Taxes (Rs.)'||0])||0, offer_adj:parseFloat(o['Offer Adjustments (Rs.)'||0])||0,
+              total_offer:parseFloat(o['Total Offer Amount (Rs.)']||0)||0, refund:parseFloat(o['Refund (Rs.)'||0])||0,
+              subcat:String(o['Product Sub Category']||'').trim(),
+            });
+            totalOrders++;
+          });
+          d.nefts.forEach(n => newNefts.add(n));
+        }
+      }
+    }
+
+    newNefts.forEach(n => reg.flipkart.add(n));
+    saveRegistry(reg);
+
     DB.flipkartLoaded = true;
-    dzSetLoaded('flipkart', `${arr.length} file(s) · ${totalOrders} rows`);
+    dzSetLoaded('flipkart', `${arr.length} file(s) · ${totalOrders} rows${dupFiles.length ? ` · ${dupFiles.length} duplicate(s) skipped` : ''}`);
     document.getElementById('flipkart-pay-meta').textContent =
       `Unique orders: ${[...new Set(DB.flipkartRaw.map(r=>r.order_item_id))].length}`;
   }
@@ -1479,15 +1900,24 @@ async function loadPayment(platform, files) {
     DB.d2cRaw = [];
     if (f.name.endsWith('.csv')) {
       const text = await readText(f);
-      DB.d2cRaw = parseCSV(text);
+      const rows = parseCSV(text);
+      DB.d2cRaw = parseRazorpayRows(rows);
     } else {
       const buf = await readBuf(f);
-      const wb = XLSX.read(buf,{type:'array'});
-      DB.d2cRaw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+      const wb  = XLSX.read(buf, {type:'array'});
+      // Razorpay exports one sheet per month — parse all sheets
+      wb.SheetNames.forEach(name => {
+        const ws   = wb.Sheets[name];
+        const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
+        DB.d2cRaw.push(...parseRazorpayRows(rows));
+      });
     }
     DB.d2cLoaded = true;
+    const captured = DB.d2cRaw.filter(r => r.status === 'captured').length;
+    const refunded = DB.d2cRaw.filter(r => r.status === 'refunded').length;
     dzSetLoaded('d2c', `${f.name} · ${DB.d2cRaw.length} rows`);
-    document.getElementById('d2c-pay-meta').textContent = `Rows: ${DB.d2cRaw.length}`;
+    document.getElementById('d2c-pay-meta').textContent =
+      `${captured} captured · ${refunded} refunded · ${DB.d2cRaw.filter(r=>r.merchant_order_id).length} with order ID`;
   }
 
   checkStep2Ready();
@@ -1528,11 +1958,13 @@ function clearLog() { document.getElementById('logbox').innerHTML = ''; }
 // ══════════════════════════════════════════════
 //  MAIN RECONCILIATION ENGINE
 // ══════════════════════════════════════════════
-async function runRecon() {
+async function runRecon(fromRerunBtn) {
   clearLog();
-  const btn = document.getElementById('btn-run');
-  btn.innerHTML = '<span class="spin"></span>Running...';
-  btn.disabled = true;
+  // Support calling from re-run buttons on other pages
+  const btn = fromRerunBtn || document.getElementById('btn-run');
+  if (btn) { btn.innerHTML = '<span class="spin"></span>Running...'; btn.disabled = true; }
+  _reconStale = false;
+  clearStaleBanner();
 
   await sleep(30);
 
@@ -1569,8 +2001,7 @@ async function runRecon() {
     console.error(e);
   }
 
-  btn.innerHTML = 'Run Reconciliation';
-  btn.disabled = false;
+  if (btn) { btn.innerHTML = 'Run Reconciliation'; btn.disabled = false; }
 }
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -1719,6 +2150,7 @@ async function engineFlipkart() {
         mp_fee: 0,
         taxes: 0,
         offer_adj: 0,
+        total_offer: 0,
         refund: 0,
         // meta
         event_count: 0,
@@ -1741,13 +2173,15 @@ async function engineFlipkart() {
     l.mp_fee         += e.mp_fee;
     l.taxes          += e.taxes;
     l.offer_adj      += e.offer_adj;
+    l.total_offer    += e.total_offer;
     l.refund         += e.refund;
     l.event_count++;
     if (e.return_type) l.has_return = true;
     if (e.neft_id) l.neft_ids.add(e.neft_id);
     if (e.payment_date < l.first_date) l.first_date = e.payment_date;
     if (e.payment_date > l.last_date)  l.last_date  = e.payment_date;
-    // Sale amount: take first non-zero (duplicated across NEFT rows)
+    // Sale amount: duplicated across NEFT rows — take first non-zero
+    // total_offer is Flipkart's platform-funded top-up (separate NEFT row, zero sale_amount)
     if (!l._sale_set && e.sale_amount > 0) { l.sale_amount = e.sale_amount; l._sale_set = true; }
     if (!l._rate_set && e.commission_rate > 0) { l.commission_rate = e.commission_rate; l._rate_set = true; }
   });
@@ -1755,7 +2189,8 @@ async function engineFlipkart() {
   const fkAccuracyFlags = [];
 
   DB.flipkartLedger = Object.values(lmap).map(l => {
-    const sale = l.sale_amount;
+    // Effective sale = customer payment + platform offer top-up = actual invoice amount
+    const sale = l.sale_amount + (l.total_offer || 0);
 
     // Expected calculations — source of truth is expected price from pricing master/events
     const orderDate  = l.order_date ? String(l.order_date).substring(0,10) : '';
@@ -1773,12 +2208,14 @@ async function engineFlipkart() {
       ? priceInfo.event.reward_rate / 100
       : fkRc.commission_rate / 100;
     const expComm     = -(expSale * expCommRate);
-    const expGst      = expComm * 0.18;
     const expFixed    = -(fkRc.fixed_fee || 10);
-    const expColl     = 0;
+    const expColl     = 0; // expected = 0, any charge is flagged
+    // GST applies to all three fee types: commission + fixed fee + collection fee
+    const expGst      = (expComm + expFixed + expColl) * 0.18;
     const expTcs      = -(expSale * (fkRc.tcs_rate / 100));
     const expTds      = -(expSale * (fkRc.tds_rate / 100));
-    const expNet      = expSale + expComm + expGst + expFixed + expColl + expTcs + expTds + l.offer_adj + l.refund;
+    // offer_adj removed — total_offer is already in sale; offer_adj is a separate platform adjustment
+    const expNet      = expSale + expComm + expGst + expFixed + expColl + expTcs + expTds + l.refund;
     const actNet      = l.bank_total;
     const netDiff     = actNet - expNet;
 
@@ -1804,6 +2241,7 @@ async function engineFlipkart() {
           order_no:         l.order_id || String(l.order_item_id),
           platform:         'Flipkart',
           sku:              l.sku,
+          dispatch_date:    (() => { const d = DB.ordersIndex[l.order_id || String(l.order_item_id)]; return d?.firstDate || l.first_date || ''; })(),
           invoice:          sale,
           expected_invoice: expSale,
           expected:         expNet,
@@ -1820,6 +2258,7 @@ async function engineFlipkart() {
         fkAccuracyFlags.push({
           order_no: l.order_id || String(l.order_item_id),
           platform: 'Flipkart', sku: l.sku,
+          dispatch_date: (() => { const d = DB.ordersIndex[l.order_id || String(l.order_item_id)]; return d?.firstDate || l.first_date || ''; })(),
           invoice: sale, expected_invoice: expSale, expected: expNet, actual: actNet, diff: netDiff,
           issue_type: 'Fee Anomaly', commission_rate: l.commission_rate / 100, extra_flags: flags,
           price_mismatch: priceFlag || null, expected_price: expectedUnitP || null, actual_unit_price: actualUnitP,
@@ -1882,8 +2321,8 @@ async function engineFlipkart() {
 function engineRecon() {
   log('Joining orders ↔ payments...', 'info');
   const today = new Date();
-  const PAYMENT_WINDOW_DAYS = 7;
-  const REPLACEMENT_GAP_DAYS = 15; // order date 15+ days before dispatch = replacement/sample
+  const PAYMENT_WINDOW_DAYS  = 7;
+  const REPLACEMENT_GAP_DAYS = 30; // must be 30+ days old AND within coverage AND no settlement = likely replacement/sample
   const ACCURACY_THRESHOLD = 10;   // ₹10 tolerance
 
   // Build settled order maps
@@ -1895,9 +2334,41 @@ function engineRecon() {
 
   const settledFk = {};      // order_id (OD...) → ledger entry
   DB.flipkartLedger.forEach(l => {
-    if (l.order_id) settledFk[l.order_id] = l;              // primary: OD... key
-    settledFk[String(l.order_item_id)] = l;                  // fallback: item ID key
+    if (l.order_id) settledFk[l.order_id] = l;
+    settledFk[String(l.order_item_id)] = l;
   });
+
+  // Build Razorpay settled map: merchant_order_id → payment row
+  const settledRazorpay = {};
+  if (DB.d2cLoaded && DB.d2cRaw.length) {
+    DB.d2cRaw.forEach(r => {
+      if (r.merchant_order_id) settledRazorpay[r.merchant_order_id] = r;
+    });
+  }
+
+  // Pre-compute settlement coverage windows using settlement start dates (more accurate than posted_date)
+  const azCoverageStart = DB.amazonLoaded ? (() => {
+    const dates = DB.amazonSettlements
+      .map(s => s.start_date || s['settlement-start-date'])
+      .filter(Boolean)
+      .map(d => String(d).substring(0,10))
+      .sort();
+    // Fallback to posted_date if no settlement-start-date
+    if (!dates[0]) {
+      const pd = DB.amazonItems.map(i => i.posted_date).filter(Boolean).sort();
+      return pd[0] ? new Date(pd[0]) : null;
+    }
+    return new Date(dates[0]);
+  })() : null;
+  const fkCoverageStart = DB.flipkartLoaded ? (() => {
+    const dates = DB.flipkartLedger.map(l => l.first_date).filter(Boolean).sort();
+    return dates[0] ? new Date(dates[0]) : null;
+  })() : null;
+
+  // Log coverage so user can verify
+  if (azCoverageStart) log(`  Amazon settlement coverage from: ${azCoverageStart.toISOString().substring(0,10)}`, 'info');
+  if (fkCoverageStart) log(`  Flipkart settlement coverage from: ${fkCoverageStart.toISOString().substring(0,10)}`, 'info');
+  log(`  Orders dispatched before coverage window → Not Paid (not Replacement)`, 'info');
 
   const reconRows = [];
   const accuracyFlags = [];
@@ -1911,12 +2382,12 @@ function engineRecon() {
     const shipments = DB.shipments[o.orderNo] || [];
 
     // ── Replacement/Sample detection ──
-    // If we had an order date field we'd compare; since we only have dispatch date,
-    // we check if order_no format suggests internal replacement (5-6 digit internal orders
-    // with very recent dates that don't match any payment platform pattern)
-    // For Amazon/Flipkart: use the 15-day rule against dispatch date as proxy
-    // (old orders that were dispatched very late relative to today's batch)
-    const isReplacement = o.platform === 'Internal' && days > REPLACEMENT_GAP_DAYS;
+    const inAzCoverage = azCoverageStart && dispatchDate >= azCoverageStart;
+    const inFkCoverage = fkCoverageStart && dispatchDate >= fkCoverageStart;
+
+    const isReplacement =
+      (o.platform === 'Amazon'   && DB.amazonLoaded   && inAzCoverage && !settledAmazon[o.orderNo] && days > REPLACEMENT_GAP_DAYS) ||
+      (o.platform === 'Flipkart' && DB.flipkartLoaded && inFkCoverage && !settledFk[o.orderNo]     && days > REPLACEMENT_GAP_DAYS);
 
     let status = 'Delayed';
     let settled_amount = 0;
@@ -1942,7 +2413,9 @@ function engineRecon() {
       items.forEach(i => {
         if (i.item_status === 'Paid' || i.item_status === 'Partially Refunded') {
           const rc        = getRateCard();
-          const orderDate = i.posted_date ? String(i.posted_date).substring(0,10) : '';
+          // Use dispatch date as order date for pricing lookup (most reliable proxy for Amazon)
+          const dispatchRow = DB.ordersIndex[i['order-id']];
+          const orderDate   = dispatchRow?.firstDate || '';
 
           // Step 1: Expected price — event price or BAU (source of truth)
           const priceInfo     = getExpectedPriceInfo(i.sku, orderDate);
@@ -1956,7 +2429,7 @@ function engineRecon() {
           // Step 2: Expected invoice = expected price × qty
           const expInvoice = expectedUnitP ? expectedUnitP * (i.qty || 1) : i.invoice;
 
-          // Step 3: Rate card deductions on expected invoice
+          // Step 3: Rate card deductions on expected invoice — NO shipping (outside rate card)
           const baseRate    = priceInfo.source === 'event' && priceInfo.event?.reward_rate != null
             ? priceInfo.event.reward_rate / 100
             : getExpectedRate(i.sku, expInvoice / (i.qty || 1));
@@ -1969,22 +2442,32 @@ function engineRecon() {
           const expCloseGst = expClose * 0.18;
           const expTcs      = -(expInvoice * TCS);
           const expTds      = -(expInvoice * TDS);
-          const expShipNet  = (i.shipping_revenue||0) + (i.shipping_commission||0);
-          const exp   = expInvoice + expRef + expRefGst + expClose + expCloseGst + expTcs + expTds + expShipNet;
+          // Expected = pricing master deductions only — shipping is outside rate card
+          const exp   = expInvoice + expRef + expRefGst + expClose + expCloseGst + expTcs + expTds;
           const actual = i.net_after_refund;
           const diff   = actual - exp;
 
+          // Flag shipping if non-zero — it's outside the rate card
+          const shipRevenue = i.shipping_revenue || 0;
+          const shipComm    = i.shipping_commission || 0;
+          const shipFlag    = (Math.abs(shipRevenue) > 0 || Math.abs(shipComm) > 0)
+            ? `Shipping outside rate card: revenue ₹${Math.round(shipRevenue)} commission ₹${Math.round(shipComm)} net ₹${Math.round(shipRevenue + shipComm)}`
+            : null;
+
           const extra_flags = [];
-          if (priceFlag) extra_flags.push(priceFlag);
+          if (priceFlag)  extra_flags.push(priceFlag);
+          if (shipFlag)   extra_flags.push(shipFlag);
           if (priceInfo.source === 'event') extra_flags.push(`Discount event: ${priceInfo.event.name} (${priceInfo.discount_pct}% off BAU ₹${Math.round(priceInfo.bau)} · reward rate ${priceInfo.event?.reward_rate ?? '—'}%)`);
 
-          if (Math.abs(diff) > ACCURACY_THRESHOLD || priceFlag) {
+          if (Math.abs(diff) > ACCURACY_THRESHOLD || priceFlag || shipFlag) {
             const issue = priceFlag && Math.abs(diff) <= ACCURACY_THRESHOLD ? 'Price Mismatch'
+                        : shipFlag && Math.abs(diff) <= ACCURACY_THRESHOLD  ? 'Shipping Anomaly'
                         : diff < 0 ? 'Underpaid' : 'Overpaid';
             accuracyFlags.push({
               order_no:         i['order-id'],
               platform:         'Amazon',
               sku:              i.sku,
+              dispatch_date:    (() => { const d = DB.ordersIndex[i['order-id']]; return d?.firstDate || ''; })(),
               invoice:          i.invoice,
               expected_invoice: expInvoice,
               expected:         exp,
@@ -2031,9 +2514,15 @@ function engineRecon() {
         else if (fkNet === 0 && fk.sale_amount > 0) status = 'Refunded'; // zero settlement on non-zero sale = returned
         else status = 'Paid';
       }
-    } else if (o.platform === 'Internal') {
-      // D2C — no payment file matching yet, mark delayed if >7 days
-      status = days >= PAYMENT_WINDOW_DAYS ? 'Delayed' : 'Delayed';
+    } else if (o.platform === 'Website' || o.platform === 'Unknown') {
+      const rzPay = settledRazorpay[o.orderNo];
+      if (rzPay) {
+        settled_amount = rzPay.net_settlement;
+        invoice_amount = rzPay.amount;
+        status = rzPay.status === 'refunded' ? 'Refunded' : 'Paid';
+      } else {
+        status = 'Unmatched';
+      }
     }
 
     // Override: if not matched but within payment window, not yet delayed
@@ -2045,6 +2534,18 @@ function engineRecon() {
       order_no: o.orderNo,
       platform: o.platform,
       dispatch_date: o.firstDate,
+      order_date:    o.firstDate || '', // use dispatch date as order date proxy
+      order_date: (() => {
+        if (o.platform === 'Amazon') {
+          const items = getAmazonItemsForOrder(o.orderNo);
+          return ''; // Amazon: use dispatch date as order date proxy (set below)
+        }
+        if (o.platform === 'Flipkart') {
+          const fk = getFkItemForOrder(o.orderNo);
+          return fk?.order_date ? String(fk.order_date).substring(0,10) : '';
+        }
+        return '';
+      })(),
       days_since_dispatch: days,
       shipment_count: shipments.length,
       skus: o.skus,
@@ -2084,6 +2585,7 @@ function engineRecon() {
       const allRefunded = items.every(i => i.item_status !== 'Paid');
       reconRows.push({
         order_no: id, platform: 'Amazon', dispatch_date: '',
+        order_date: '', // posted_date is settlement posting date, not order date
         days_since_dispatch: 0, shipment_count: 0,
         skus: [...new Set(items.map(i => i.sku))],
         status: allRefunded ? 'Refunded' : hasRefund ? 'Partial' : 'Paid',
@@ -2101,7 +2603,9 @@ function engineRecon() {
     ).forEach(l => {
       reconRows.push({
         order_no: l.order_id || String(l.order_item_id), platform: 'Flipkart',
-        dispatch_date: l.first_date, days_since_dispatch: 0,
+        dispatch_date: l.first_date,
+        order_date: l.order_date ? String(l.order_date).substring(0,10) : '',
+        days_since_dispatch: 0,
         shipment_count: 0, skus: [l.sku],
         status: (l.negative || (l.bank_total||0) === 0) ? 'Refunded' : 'Paid',
         settled_amount: l.bank_total || l.total || 0, invoice_amount: 0,
@@ -2240,13 +2744,13 @@ document.addEventListener('click', e => {
 });
 
 function platPill(p) {
-  const m = {Amazon:'p-amazon',Flipkart:'p-flipkart',Internal:'p-d2c','Website/Other':'p-d2c'};
+  const m = {Amazon:'p-amazon',Flipkart:'p-flipkart',Internal:'p-d2c',Website:'p-d2c','Website/Other':'p-d2c'};
   return `<span class="pill ${m[p]||'p-d2c'}">${p}</span>`;
 }
 function statusPill(s) {
   const m = {
     'Paid':'p-paid','Delayed':'p-delayed','Refunded':'p-refund',
-    'Partial':'p-partial','Replacement':'p-multi','Pending':'p-flag'
+    'Partial':'p-partial','Replacement':'p-multi','Pending':'p-flag','Unmatched':'p-flag'
   };
   return `<span class="pill ${m[s]||'p-delayed'}">${s==='Delayed'?'Not Paid':s}</span>`;
 }
@@ -2314,7 +2818,7 @@ function renderOrdersTable() {
   const q  = document.getElementById('of-search').value.toLowerCase();
 
   let filtered = orders.filter(o=>{
-    if (pf && o.platform !== pf && !(pf==='Internal' && (o.platform==='Internal'||o.platform==='Unknown'))) return false;
+    if (pf && o.platform !== pf && !(pf==='Website' && (o.platform==='Website'||o.platform==='Unknown'))) return false;
     if (sf==='multi' && o.shipmentCount<2) return false;
     if (sf==='single' && o.shipmentCount>1) return false;
     if (q) {
@@ -2399,40 +2903,116 @@ function toggleShipments(rowId, orderNo, idx) {
 // ══════════════════════════════════════════════
 let chReconStatus, chReconPlatform;
 
+// Order lookup helpers
+function getAmazonItemsForOrder(orderNo) {
+  return DB.amazonItems.filter(i => i['order-id'] === orderNo);
+}
+function getFkItemForOrder(orderNo) {
+  return DB.flipkartLedger.find(l =>
+    l.order_id === orderNo || String(l.order_item_id) === String(orderNo)
+  );
+}
+
+// ── Month filter helpers ──
+function populateMonthFilter(selectId, rows, dateField) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  const current = sel.value;
+  const months = new Set();
+  rows.forEach(r => {
+    const d = r[dateField];
+    if (!d) return;
+    const str = String(d).trim();
+    let y, m;
+    if (/^\d{4}-\d{2}/.test(str))             { [y, m] = str.split('-'); }
+    else if (/^\d{2}\.\d{2}\.\d{4}/.test(str)) { const p=str.split('.'); y=p[2]; m=p[1]; }
+    else { const dt=new Date(str); if(!isNaN(dt)){y=dt.getFullYear();m=String(dt.getMonth()+1).padStart(2,'0');} }
+    if (y && m) months.add(`${y}-${String(m).padStart(2,'0')}`);
+  });
+  const sorted = [...months].sort().reverse();
+  const MN = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  sel.innerHTML = '<option value="">All months</option>' +
+    sorted.map(ym => {
+      const [yr, mo] = ym.split('-');
+      return `<option value="${ym}" ${ym===current?'selected':''}>${MN[parseInt(mo)]} ${yr}</option>`;
+    }).join('');
+}
+
+function getMonthFilter(selectId) {
+  const el = document.getElementById(selectId);
+  return el ? el.value : '';
+}
+
+function monthMatchesFilter(dateStr, monthFilter) {
+  if (!monthFilter || !dateStr) return true;
+  const s = String(dateStr).trim();
+  if (/^\d{4}-\d{2}/.test(s))             return s.startsWith(monthFilter);
+  if (/^\d{2}\.\d{2}\.\d{4}/.test(s)) { const p=s.split('.'); return `${p[2]}-${p[1]}`===monthFilter; }
+  const dt = new Date(s);
+  if (!isNaN(dt)) return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}` === monthFilter;
+  return true;
+}
+
 function renderReconPage() {
   const allRows = DB.reconOutput;
   if (!allRows.length) return;
   document.getElementById('recon-empty').style.display = 'none';
-  document.getElementById('recon-body').style.display = 'block';
+  document.getElementById('recon-body').style.display  = 'block';
+  // Populate month filter from dispatch dates
+  const dispatched = allRows.filter(r => r.from_dispatch !== false);
+  populateMonthFilter('rf-month', dispatched, 'dispatch_date');
+  renderDispatchedTable();
+}
 
-  // Treat rows without from_dispatch field (old cached data) as dispatched
-  const dispatched  = allRows.filter(r => r.from_dispatch !== false);
-  const unmatched   = allRows.filter(r => r.from_dispatch === false);
+function renderDispatchedTable() {
+  const mf = getMonthFilter('rf-month');
+  const sf = document.getElementById('rf-status').value;
+  const pf = document.getElementById('rf-platform').value;
+  const q  = document.getElementById('rf-search').value.toLowerCase();
 
-  const paid        = dispatched.filter(r=>r.status==='Paid');
-  const notPaid     = dispatched.filter(r=>r.status==='Delayed');
-  const refunded    = dispatched.filter(r=>r.status==='Refunded'||r.status==='Partial');
-  const replacement = dispatched.filter(r=>r.status==='Replacement');
-  const pending     = dispatched.filter(r=>r.status==='Pending');
-  const totalNet    = dispatched.reduce((s,r)=>s+(r.settled_amount||0),0);
+  const allDispatched = DB.reconOutput.filter(r => r.from_dispatch !== false);
+
+  // Apply filters
+  const filtered = allDispatched.filter(r => {
+    if (mf && !monthMatchesFilter(r.dispatch_date, mf)) return false;
+    if (sf && r.status !== sf) return false;
+    if (pf && r.platform !== pf && !(pf==='Website'&&(r.platform==='Website'||r.platform==='Unknown'))) return false;
+    if (q) {
+      const ships = DB.shipments[r.order_no]||[];
+      const awbs  = ships.map(s=>s.awb).join(' ').toLowerCase();
+      if (!r.order_no.toLowerCase().includes(q) && !r.skus.join(' ').toLowerCase().includes(q) && !awbs.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const isFiltered = !!(mf || sf || pf || q);
+
+  // ── Dynamic KPIs ──
+  const paid        = filtered.filter(r=>r.status==='Paid').length;
+  const notPaid     = filtered.filter(r=>r.status==='Delayed').length;
+  const refunded    = filtered.filter(r=>r.status==='Refunded'||r.status==='Partial').length;
+  const replacement = filtered.filter(r=>r.status==='Replacement').length;
+  const pending     = filtered.filter(r=>r.status==='Pending').length;
+  const totalNet    = filtered.reduce((s,r)=>s+(r.settled_amount||0),0);
 
   document.getElementById('recon-kpis').innerHTML = `
-    <div class="kpi"><div class="kpi-label">Unique dispatched</div><div class="kpi-val kv-accent">${dispatched.length.toLocaleString()}</div><div class="kpi-sub">From your dispatch log</div></div>
-    <div class="kpi"><div class="kpi-label">Paid</div><div class="kpi-val kv-success">${paid.length}</div><div class="kpi-sub">Settlement received</div></div>
-    <div class="kpi"><div class="kpi-label">Not paid</div><div class="kpi-val kv-danger">${notPaid.length}</div><div class="kpi-sub">7+ days, no settlement</div></div>
-    <div class="kpi"><div class="kpi-label">Refunded</div><div class="kpi-val kv-warn">${refunded.length}</div><div class="kpi-sub">Physical check needed</div></div>
-    <div class="kpi"><div class="kpi-label">Replacement</div><div class="kpi-val" style="color:var(--text2)">${replacement.length}</div><div class="kpi-sub">Not expected</div></div>
-    <div class="kpi"><div class="kpi-label">Net settled</div><div class="kpi-val kv-accent">${fINR(totalNet)}</div><div class="kpi-sub">Dispatched orders only</div></div>
+    <div class="kpi"><div class="kpi-label">Unique dispatched</div><div class="kpi-val kv-accent">${filtered.length.toLocaleString()}</div><div class="kpi-sub">${isFiltered?'Matching filters':'From your dispatch log'}</div></div>
+    <div class="kpi"><div class="kpi-label">Paid</div><div class="kpi-val kv-success">${paid.toLocaleString()}</div><div class="kpi-sub">Settlement received</div></div>
+    <div class="kpi"><div class="kpi-label">Not paid</div><div class="kpi-val kv-danger">${notPaid.toLocaleString()}</div><div class="kpi-sub">7+ days, no settlement</div></div>
+    <div class="kpi"><div class="kpi-label">Refunded</div><div class="kpi-val kv-warn">${refunded.toLocaleString()}</div><div class="kpi-sub">Physical check needed</div></div>
+    <div class="kpi"><div class="kpi-label">Replacement</div><div class="kpi-val" style="color:var(--text2)">${replacement.toLocaleString()}</div><div class="kpi-sub">Not expected</div></div>
+    <div class="kpi"><div class="kpi-label">Net settled</div><div class="kpi-val kv-accent">${fINR(totalNet)}</div><div class="kpi-sub">${isFiltered?'Filtered orders only':'Dispatched orders only'}</div></div>
   `;
 
+  // ── Dynamic charts ──
   if (chReconStatus) chReconStatus.destroy();
   chReconStatus = new Chart(document.getElementById('ch-recon-status'), {
     type:'doughnut',
     data:{labels:['Paid','Not Paid','Refunded','Partial','Replacement','Pending'],
-      datasets:[{data:[paid.length,notPaid.length,
-        refunded.filter(r=>r.status==='Refunded').length,
-        refunded.filter(r=>r.status==='Partial').length,
-        replacement.length,pending.length],
+      datasets:[{data:[paid, notPaid,
+        filtered.filter(r=>r.status==='Refunded').length,
+        filtered.filter(r=>r.status==='Partial').length,
+        replacement, pending],
         backgroundColor:['#4ab87a','#e05353','#f0a832','#a08af0','#5ba8f0','#444441'],
         borderWidth:2,borderColor:'#131316'}]},
     options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
@@ -2440,7 +3020,7 @@ function renderReconPage() {
   });
 
   const plats={};
-  dispatched.forEach(r=>{ plats[r.platform]=(plats[r.platform]||0)+1; });
+  filtered.forEach(r=>{ plats[r.platform]=(plats[r.platform]||0)+1; });
   if (chReconPlatform) chReconPlatform.destroy();
   chReconPlatform = new Chart(document.getElementById('ch-recon-platform'), {
     type:'doughnut',
@@ -2452,38 +3032,25 @@ function renderReconPage() {
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.label}: ${c.raw}`}}}}
   });
 
-  renderDispatchedTable();
-}
+  // ── Table ──
+  const total = filtered.length;
+  const shown = filtered.slice(0, 300);
 
-function renderDispatchedTable() {
-  const sf = document.getElementById('rf-status').value;
-  const pf = document.getElementById('rf-platform').value;
-  const q  = document.getElementById('rf-search').value.toLowerCase();
-
-  let rows = DB.reconOutput.filter(r => r.from_dispatch !== false);
-  rows = rows.filter(r=>{
-    if (sf && r.status !== sf) return false;
-    if (pf && r.platform !== pf && !(pf==='Internal'&&(r.platform==='Internal'||r.platform==='Unknown'))) return false;
-    if (q) {
-      const ships = DB.shipments[r.order_no]||[];
-      const awbs = ships.map(s=>s.awb).join(' ').toLowerCase();
-      if (!r.order_no.toLowerCase().includes(q) && !r.skus.join(' ').toLowerCase().includes(q) && !awbs.includes(q)) return false;
-    }
-    return true;
-  });
-
-  const total = rows.length;
-  const shown = rows.slice(0,300);
+  const filterBadge = isFiltered
+    ? `<span style="background:rgba(200,240,74,.12);color:var(--accent);font-size:10px;padding:2px 8px;border-radius:4px;margin-left:8px;border:1px solid rgba(200,240,74,.3)">${total.toLocaleString()} order${total!==1?'s':''}</span>`
+    : '';
 
   let html = `
     <div class="tbl-wrap">
       <div class="tbl-head">
-        <span class="tbl-title">Dispatched orders</span>
+        <span class="tbl-title">Dispatched orders${filterBadge}</span>
         <span class="tbl-count">Showing ${shown.length} of ${total} · click any row for deduction breakdown</span>
       </div>
       <div class="tbl-scroll"><table class="dt"><thead><tr>
-        <th>Order no</th><th>Platform</th><th>SKU(s)</th><th>Dispatch date</th>
-        <th class="num">Days</th><th>Status</th><th class="num">Settled</th><th>Shipments</th>
+        <th>Order no</th><th>Platform</th><th>SKU(s)</th>
+        <th>Order date</th><th class="m-hide">Dispatch date</th>
+        <th class="num m-hide">Days</th><th>Status</th>
+        <th class="num">Settled</th><th class="m-hide">Shipments</th>
       </tr></thead><tbody>
   `;
 
@@ -2500,102 +3067,77 @@ function renderDispatchedTable() {
         <td class="mono">${r.order_no}</td>
         <td>${platPill(r.platform)}</td>
         <td class="dim">${r.skus.slice(0,2).join(', ')}${r.skus.length>2?` +${r.skus.length-2}`:''}</td>
-        <td class="dim">${r.dispatch_date||'—'}</td>
-        <td class="num" style="${dc}">${r.days_since_dispatch||'—'}</td>
+        <td class="dim">${r.order_date ? fDate(r.order_date) : '—'}</td>
+        <td class="dim m-hide">${r.dispatch_date ? fDate(r.dispatch_date) : '—'}</td>
+        <td class="num m-hide" style="${dc}">${r.days_since_dispatch||'—'}</td>
         <td>${statusPill(r.status)}</td>
         <td class="num">${r.settled_amount?fFull(r.settled_amount):'—'}</td>
-        <td>${ships.length>1?`<span class="pill p-multi">${ships.length} AWBs</span>`:ships.length||'—'}</td>
+        <td class="m-hide">${ships.length>1?`<span class="pill p-multi">${ships.length} AWBs</span>`:ships.length||'—'}</td>
       </tr>
       <tr class="breakdown-row" id="brow-${rowId}">
-        <td colspan="8"><div class="breakdown-panel" id="bpanel-${rowId}"></div></td>
+        <td colspan="9"><div class="breakdown-panel" id="bpanel-${rowId}"></div></td>
       </tr>`;
   });
 
-  if (!shown.length) html += `<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:24px">No matching orders</td></tr>`;
+  if (!shown.length) html += `<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">No orders match the current filters</td></tr>`;
   html += '</tbody></table></div></div>';
   document.getElementById('recon-dispatched').innerHTML = html;
 }
 
-function renderUnmatchedTable() {
-  const pf = document.getElementById('ru-platform').value;
-  const sf = document.getElementById('ru-status').value;
-  const q  = document.getElementById('ru-search').value.toLowerCase();
 
-  let rows = DB.reconOutput.filter(r => r.from_dispatch === false);
-  rows = rows.filter(r=>{
-    if (pf && r.platform !== pf) return false;
+function exportReconCSV() {
+  const mf = getMonthFilter('rf-month');
+  const sf = document.getElementById('rf-status').value;
+  const pf = document.getElementById('rf-platform').value;
+  const q  = document.getElementById('rf-search').value.toLowerCase();
+
+  let rows = DB.reconOutput.filter(r => r.from_dispatch !== false);
+  rows = rows.filter(r => {
+    if (mf && !monthMatchesFilter(r.dispatch_date, mf)) return false;
     if (sf && r.status !== sf) return false;
-    if (q && !r.order_no.toLowerCase().includes(q) && !(r.skus||[]).join(' ').toLowerCase().includes(q)) return false;
+    if (pf && r.platform !== pf && !(pf==='Website'&&(r.platform==='Website'||r.platform==='Unknown'))) return false;
+    if (q) {
+      const ships = DB.shipments[r.order_no]||[];
+      const awbs  = ships.map(s=>s.awb).join(' ').toLowerCase();
+      if (!r.order_no.toLowerCase().includes(q) && !r.skus.join(' ').toLowerCase().includes(q) && !awbs.includes(q)) return false;
+    }
     return true;
   });
 
-  const total = rows.length;
-  const shown = rows.slice(0,200);
+  if (!rows.length) { alert('No rows to export.'); return; }
 
-  let html = `
-    <div class="tbl-wrap">
-      <div class="tbl-head">
-        <span class="tbl-title">Settlement-only orders</span>
-        <span class="tbl-count">Showing ${shown.length} of ${total} · click row for breakdown</span>
-      </div>
-      <div class="tbl-scroll"><table class="dt"><thead><tr>
-        <th>Order ID</th><th>Platform</th><th>SKU(s)</th><th>Status</th>
-        <th class="num">Settled amount</th><th>Action</th>
-      </tr></thead><tbody>
-  `;
+  const esc = v => `"${String(v??'').replace(/"/g,'""')}"`;
+  const headers = ['Order No','Platform','SKU(s)','Order Date','Dispatch Date','Days Since Dispatch','Status','Settled Amount (₹)','Invoice Amount (₹)','Shipments'];
+  const csvRows = [headers.join(',')];
 
-  shown.forEach((r, idx) => {
-    const hasBreakdown = r.platform==='Amazon' && getAmazonItemsForOrder(r.order_no).length>0;
-    const rowId = `ur-${idx}`;
-    html += `
-      <tr class="expandable-row" id="erow-${rowId}"
-          onclick="${hasBreakdown?`toggleBreakdown('${rowId}','${r.order_no}','${r.platform}')`:''}"
-          style="${!hasBreakdown?'cursor:default':''}">
-        <td class="mono">${r.order_no}</td>
-        <td>${platPill(r.platform)}</td>
-        <td class="dim">${(r.skus||[]).slice(0,2).join(', ')||'—'}</td>
-        <td>${statusPill(r.status)}</td>
-        <td class="num">${r.settled_amount?fFull(r.settled_amount):'—'}</td>
-        <td style="font-size:10px;color:var(--warn)">Not in dispatch log — verify</td>
-      </tr>
-      <tr class="breakdown-row" id="brow-${rowId}">
-        <td colspan="6"><div class="breakdown-panel" id="bpanel-${rowId}"></div></td>
-      </tr>`;
+  rows.forEach(r => {
+    const ships = DB.shipments[r.order_no]||[];
+    const awbs  = ships.map(s=>s.awb).join(' | ');
+    csvRows.push([
+      esc(r.order_no),
+      esc(r.platform),
+      esc(r.skus.join(', ')),
+      esc(r.order_date ? fDate(r.order_date) : '—'),
+      esc(r.dispatch_date ? fDate(r.dispatch_date) : '—'),
+      r.days_since_dispatch || 0,
+      esc(r.status),
+      Math.round(r.settled_amount || 0),
+      Math.round(r.invoice_amount || 0),
+      esc(awbs || '—'),
+    ].join(','));
   });
 
-  if (!shown.length) html += `<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:24px">No settlement-only orders found</td></tr>`;
-  html += '</tbody></table></div></div>';
-  document.getElementById('recon-unmatched').innerHTML = html;
-}
-
-
-function getAmazonItemsForOrder(orderNo) {
-  return DB.amazonItems.filter(i => i['order-id'] === orderNo);
-}
-function getFkItemForOrder(orderNo) {
-  return DB.flipkartLedger.find(l =>
-    l.order_id === orderNo ||
-    String(l.order_item_id) === String(orderNo)
-  );
-}
-function getExpectedRate(sku, invoiceAmount) {
-  const rc = getRateCard();
-  const cat = (window._skuCatMap && window._skuCatMap[sku]) || 'Uncategorized';
-  const catEntry = rc.categories.find(c => c.category === cat);
-  if (!catEntry) return 0.155;
-  const threshold = catEntry.threshold ?? 15000;
-  const rate = (invoiceAmount || 0) > threshold
-    ? (catEntry.rate_above ?? 11.0)
-    : (catEntry.rate_below ?? 15.5);
-  return rate / 100;
-}
-
-function getExpectedClosingFee(sku) {
-  const rc = getRateCard();
-  const cat = (window._skuCatMap && window._skuCatMap[sku]) || 'Uncategorized';
-  const catEntry = rc.categories.find(c => c.category === cat);
-  if (catEntry) return catEntry.closing_fee;
-  return 100; // default
+  const csv  = csvRows.join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const filters = [sf||'all', pf||'all-platforms'].join('_');
+  a.href     = url;
+  a.download = `reconlens_reconciliation_${filters}_${new Date().toISOString().substring(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 function toggleBreakdown(rowId, orderNo, platform) {
@@ -2631,7 +3173,11 @@ function buildAmazonBreakdown(orderNo) {
 
   items.forEach((item, idx) => {
     const invoice      = item.invoice;
-    const orderDate    = item.posted_date ? String(item.posted_date).substring(0,10) : '';
+    const orderDate    = (() => {
+      // Use dispatch date as order date proxy (most reliable for Amazon)
+      const dispRow = DB.ordersIndex[orderNo];
+      return dispRow?.firstDate || '';
+    })();
     const priceInfo    = getExpectedPriceInfo(item.sku, orderDate);
     const expUnitPrice = priceInfo.price;
     const expInvoice   = expUnitPrice ? expUnitPrice * (item.qty || 1) : invoice;
@@ -2640,44 +3186,35 @@ function buildAmazonBreakdown(orderNo) {
       : getExpectedRate(item.sku, expInvoice / (item.qty || 1));
     const expCloseFee  = getExpectedClosingFee(item.sku);
 
-    // All deductions apply to expected invoice (source of truth)
+    // All deductions apply to expected invoice — rate card only, NO shipping
     const expRef       = -(expInvoice * expRate);
     const expRefGst    = expRef * 0.18;
     const expClose     = -Math.abs(expCloseFee) * (item.qty || 1);
     const expCloseGst  = expClose * 0.18;
     const expTcs       = -(expInvoice * TCS);
     const expTds       = -(expInvoice * TDS);
-    const expShipNet   = (item.shipping_revenue||0) + (item.shipping_commission||0);
 
-    const expNet = expInvoice + expRef + expRefGst + expClose + expCloseGst + expTcs + expTds + expShipNet;
-    const actNet = item.net_after_refund;
+    const expNet  = expInvoice + expRef + expRefGst + expClose + expCloseGst + expTcs + expTds;
+    const actNet  = item.net_after_refund;
     const netDiff = actNet - expNet;
     const invoiceDiff = invoice - expInvoice;
 
-    // Build rows: [label, actual, expected, diff]
+    const shipRevenue = item.shipping_revenue || 0;
+    const shipComm    = item.shipping_commission || 0;
+    const hasShipping = Math.abs(shipRevenue) > 0 || Math.abs(shipComm) > 0;
+
     const lineRows = [
       [`Invoice (customer paid)${Math.abs(invoiceDiff)>50?' ⚠':''}`, invoice, expInvoice, invoiceDiff],
       [`Referral fee (exp ${fPct(expRate)}${(expInvoice/(item.qty||1)) > (getRateCard().categories.find(c=>c.category===((window._skuCatMap&&window._skuCatMap[item.sku])||'Uncategorized'))?.threshold??15000) ? ' above slab' : ' below slab'} · unit ₹${fmtNum(expInvoice/(item.qty||1))} / act ${fPct(item.commission_rate)})`,
         item.referral, expRef, item.referral - expRef],
-      ['Referral GST (18%)',
-        item.referral_gst, expRefGst, item.referral_gst - expRefGst],
-      [`Closing fee (₹${expCloseFee} × ${item.qty||1})`,
-        item.closing, expClose, item.closing - expClose],
-      ['Closing GST (18%)',
-        item.closing_gst, expCloseGst, item.closing_gst - expCloseGst],
-      [`TCS (${rc.tcs_rate}% of invoice)`,
-        item.tcs, expTcs, item.tcs - expTcs],
-      [`TDS (${rc.tds_rate}% of invoice)`,
-        item.tds, expTds, item.tds - expTds],
+      ['Referral GST (18%)',       item.referral_gst, expRefGst,  item.referral_gst - expRefGst],
+      [`Closing fee (₹${expCloseFee} × ${item.qty||1})`, item.closing, expClose, item.closing - expClose],
+      ['Closing GST (18%)',        item.closing_gst,  expCloseGst,item.closing_gst - expCloseGst],
+      [`TCS (${rc.tcs_rate}% of invoice)`, item.tcs, expTcs,     item.tcs - expTcs],
+      [`TDS (${rc.tds_rate}% of invoice)`, item.tds, expTds,     item.tds - expTds],
+      ['Net settlement (rate card only)', actNet, expNet, netDiff],
     ];
 
-    // Shipping rows only if present
-    if (Math.abs(item.shipping_revenue||0) > 0 || Math.abs(item.shipping_commission||0) > 0) {
-      lineRows.push(['Shipping revenue', item.shipping_revenue||0, item.shipping_revenue||0, 0]);
-      lineRows.push(['Shipping commission', item.shipping_commission||0, item.shipping_commission||0, 0]);
-    }
-
-    lineRows.push(['Net settlement', actNet, expNet, netDiff]);
 
     const itemStatus = item.item_status;
     const statusCls = itemStatus === 'Paid' ? 'p-paid' : itemStatus.includes('Refund') ? 'p-refund' : 'p-delayed';
@@ -2736,6 +3273,12 @@ function buildAmazonBreakdown(orderNo) {
         </div>`;
       }
     }
+    if (hasShipping) {
+      html += `<div style="margin-top:7px;padding:5px 10px;background:rgba(224,83,83,.08);border-radius:4px;font-size:11px;color:var(--warn)">
+        ⚠ Shipping outside rate card — revenue ${fFull(shipRevenue)} · commission ${fFull(shipComm)} · net ${fFull(shipRevenue + shipComm)}
+        <span style="color:var(--text3);margin-left:8px;font-size:10px">Not included in expected settlement</span>
+      </div>`;
+    }
 
     html += '</div>';
   });
@@ -2764,7 +3307,8 @@ function buildFlipkartBreakdown(orderNo) {
   const fDiff = v => Math.abs(v) < 0.5 ? '—' : (v > 0 ? '+' : '') + fFull(v);
   const dCls  = v => Math.abs(v) < 0.5 ? 'bk-ok' : v < 0 ? 'bk-neg' : 'bk-pos';
 
-  const sale      = fk.sale_amount || 0;
+  // Effective sale = customer payment + platform offer top-up
+  const sale      = (fk.sale_amount || 0) + (fk.total_offer || 0);
   const actNet    = fk.bank_total  || fk.total || 0;
   const orderDate = fk.order_date ? String(fk.order_date).substring(0,10) : '';
   const priceInfo = getExpectedPriceInfo(fk.sku, orderDate);
@@ -2779,11 +3323,13 @@ function buildFlipkartBreakdown(orderNo) {
 
   // Recalculate expected using expSale as base
   const expCommAmt  = -(expSale * effectiveCommRate / 100);
-  const expGstAmt   = expCommAmt * 0.18;
   const expFixedAmt = -(fkRc.fixed_fee || 10);
+  const expCollAmt  = 0; // expected = 0
+  // GST applies to commission + fixed fee + collection fee (all marketplace fees)
+  const expGstAmt   = (expCommAmt + expFixedAmt + expCollAmt) * 0.18;
   const expTcsAmt   = -(expSale * (fkRc.tcs_rate / 100));
   const expTdsAmt   = -(expSale * (fkRc.tds_rate / 100));
-  const expNet      = expSale + expCommAmt + expGstAmt + expFixedAmt + expTcsAmt + expTdsAmt + (fk.offer_adj||0) + (fk.refund||0);
+  const expNet      = expSale + expCommAmt + expGstAmt + expFixedAmt + expTcsAmt + expTdsAmt + (fk.refund||0);
   const netDiff     = actNet - expNet;
   const saleDiff    = sale - expSale;
 
@@ -2791,7 +3337,7 @@ function buildFlipkartBreakdown(orderNo) {
     [`Sale amount${Math.abs(saleDiff)>50?' ⚠':''}`, sale, expSale, saleDiff],
     [`Commission (exp ${effectiveCommRate}%${priceInfo.source==='event'?' [event]':''} / act ${(fk.commission_rate||0).toFixed(1)}%)`,
       fk.commission||0, expCommAmt, (fk.commission||0)-expCommAmt],
-    ['GST on MP fees (18%)',
+    ['GST on MP fees (18% of comm+fixed+coll)',
       fk.gst_on_fees||0, expGstAmt, (fk.gst_on_fees||0)-expGstAmt],
     ['Fixed fee',
       fk.fixed_fee||0, expFixedAmt, (fk.fixed_fee||0)-expFixedAmt],
@@ -2868,6 +3414,7 @@ function buildFlipkartBreakdown(orderNo) {
     <div class="bk-sub-title">Settlement info</div>
     <table class="bk-tbl"><tbody>
       <tr><td class="bk-label">NEFT batches</td><td class="bk-act">${fk.neft_count||1}</td><td></td><td></td></tr>
+      <tr><td class="bk-label">NEFT ID${(fk.neft_count||1)>1?'s':''}</td><td class="bk-act" style="font-family:var(--mono);font-size:9px;color:var(--text2)">${(fk.neft_ids_str||'—').split(', ').join('<br>')}</td><td></td><td></td></tr>
       <tr><td class="bk-label">Events</td><td class="bk-act">${fk.event_count||1}</td><td></td><td></td></tr>
       <tr><td class="bk-label">First payment</td><td class="bk-act">${fDate(fk.first_date)}</td><td></td><td></td></tr>
       <tr><td class="bk-label">Last payment</td><td class="bk-act">${fDate(fk.last_date)}</td><td></td><td></td></tr>
@@ -3158,7 +3705,7 @@ function buildMasterRows() {
     return {
       settlement_id:   items[0].settlement_id || '—',
       settlement_date: fDate(items[0].deposit_date),
-      order_date:      fDate(items[0].posted_date),
+      order_date:      '',  // posted_date is settlement posting date, not order date
       qty:             items.reduce((s,i) => s + (i.qty||1), 0),
       selling_price:   items.reduce((s,i) => s + i.invoice, 0),
       final_amount:    items.reduce((s,i) => s + i.net_after_refund, 0),
@@ -3307,7 +3854,7 @@ function renderMasterTable() {
   const q  = document.getElementById('md-search').value.toLowerCase();
 
   let rows = _masterCache.filter(r => {
-    if (pf && r.platform !== pf && !(pf==='Internal'&&r.platform==='Unknown')) return false;
+    if (pf && r.platform !== pf && !(pf==='Website'&&(r.platform==='Website'||r.platform==='Unknown'))) return false;
     if (sf) {
       if (sf === 'no_settlement' && r.in_settlement) return false;
       if (sf === 'no_dispatch'   && r.in_dispatch)   return false;
@@ -3430,41 +3977,59 @@ function renderDelayedPage() {
 }
 
 function renderDelayed() {
-  let rows = DB.reconOutput.filter(r=>r.status==='Delayed' && r.from_dispatch !== false);
+  const allRows = DB.reconOutput.filter(r=>r.status==='Delayed' && r.from_dispatch !== false);
   const pf = document.getElementById('df-platform').value;
   const md = parseInt(document.getElementById('df-days').value)||0;
   const q  = document.getElementById('df-search').value.toLowerCase();
 
-  rows = rows.filter(r=>{
+  const filtered = allRows.filter(r=>{
     if (pf&&r.platform!==pf) return false;
     if (md&&r.days_since_dispatch<md) return false;
     if (q&&!r.order_no.toLowerCase().includes(q)) return false;
     return true;
   }).sort((a,b)=>b.days_since_dispatch-a.days_since_dispatch);
 
-  const total = rows.length;
-  rows = rows.slice(0,300);
+  const isFiltered = !!(pf||md||q);
+  const total = filtered.length;
+
+  // Dynamic KPIs
+  const over14 = filtered.filter(r=>r.days_since_dispatch>=14).length;
+  const over7  = filtered.filter(r=>r.days_since_dispatch>=7&&r.days_since_dispatch<14).length;
+  const amzCnt = filtered.filter(r=>r.platform==='Amazon').length;
+  const fkCnt  = filtered.filter(r=>r.platform==='Flipkart').length;
+  document.getElementById('delayed-kpis').innerHTML = `
+    <div class="kpi"><div class="kpi-label">Not settled</div><div class="kpi-val kv-danger">${total.toLocaleString()}</div><div class="kpi-sub">${isFiltered?'Matching filters':'7+ days, no payment'}</div></div>
+    <div class="kpi"><div class="kpi-label">14+ days</div><div class="kpi-val kv-danger">${over14.toLocaleString()}</div><div class="kpi-sub">Critically overdue</div></div>
+    <div class="kpi"><div class="kpi-label">7–14 days</div><div class="kpi-val kv-warn">${over7.toLocaleString()}</div><div class="kpi-sub">Monitor closely</div></div>
+    <div class="kpi"><div class="kpi-label">Amazon</div><div class="kpi-val">${amzCnt.toLocaleString()}</div><div class="kpi-sub">Orders</div></div>
+    <div class="kpi"><div class="kpi-label">Flipkart</div><div class="kpi-val">${fkCnt.toLocaleString()}</div><div class="kpi-sub">Orders</div></div>
+  `;
+
+  const shown = filtered.slice(0,300);
+  const filterBadge = isFiltered
+    ? `<span style="background:rgba(200,240,74,.12);color:var(--accent);font-size:10px;padding:2px 8px;border-radius:4px;margin-left:8px;border:1px solid rgba(200,240,74,.3)">${total.toLocaleString()} order${total!==1?'s':''}</span>`
+    : '';
 
   let html=`
     <div class="tbl-wrap">
-      <div class="tbl-head"><span class="tbl-title">Orders with no settlement received</span><span class="tbl-count">${total} orders · sorted by most overdue</span></div>
+      <div class="tbl-head"><span class="tbl-title">Orders with no settlement received${filterBadge}</span><span class="tbl-count">${shown.length} of ${total} · sorted by most overdue</span></div>
       <div class="tbl-scroll"><table class="dt">
         <thead><tr><th>Order no</th><th>Platform</th><th>SKU(s)</th><th>Dispatch date</th><th class="num">Days pending</th><th>AWB(s)</th></tr></thead>
         <tbody>
   `;
-  rows.forEach(r=>{
+  shown.forEach(r=>{
     const dc = r.days_since_dispatch>=14?'color:var(--danger)':r.days_since_dispatch>=7?'color:var(--warn)':'';
     const ships = DB.shipments[r.order_no]||[];
     html+=`<tr>
       <td class="mono">${r.order_no}</td>
       <td>${platPill(r.platform)}</td>
       <td class="dim">${r.skus.slice(0,2).join(', ')}${r.skus.length>2?` +${r.skus.length-2}`:''}</td>
-      <td class="dim">${r.dispatch_date||'—'}</td>
+      <td class="dim">${r.dispatch_date?fDate(r.dispatch_date):'—'}</td>
       <td class="num" style="${dc};font-weight:600">${r.days_since_dispatch}</td>
       <td class="dim" style="font-size:10px">${ships.slice(0,2).map(s=>s.awb).join(', ')||'—'}</td>
     </tr>`;
   });
-  if(!rows.length) html+=`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:24px">No unpaid orders matching filters</td></tr>`;
+  if(!shown.length) html+=`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:24px">No unpaid orders matching filters</td></tr>`;
   html+='</tbody></table></div></div>';
   document.getElementById('delayed-table').innerHTML = html;
 }
@@ -3477,43 +4042,57 @@ function renderAccuracyPage() {
   document.getElementById('accuracy-empty').style.display = (!flags.length||!DB.reconDone)?'block':'none';
   document.getElementById('accuracy-body').style.display = (flags.length&&DB.reconDone)?'block':'none';
   if (!flags.length||!DB.reconDone) return;
-
-  const underpaid = flags.filter(f=>f.issue_type==='Underpaid');
-  const overpaid  = flags.filter(f=>f.issue_type==='Overpaid');
-  const totalUnder = underpaid.reduce((s,f)=>s+Math.abs(f.diff),0);
-  const totalOver  = overpaid.reduce((s,f)=>s+Math.abs(f.diff),0);
-  const netExp = totalUnder - totalOver;
-
-  document.getElementById('accuracy-kpis').innerHTML = `
-    <div class="kpi"><div class="kpi-label">Total discrepancies</div><div class="kpi-val kv-danger">${flags.length}</div><div class="kpi-sub">Payment amount wrong</div></div>
-    <div class="kpi"><div class="kpi-label">Underpaid</div><div class="kpi-val kv-danger">${underpaid.length}</div><div class="kpi-sub">${fINR(totalUnder)} owed to you</div></div>
-    <div class="kpi"><div class="kpi-label">Overpaid</div><div class="kpi-val kv-warn">${overpaid.length}</div><div class="kpi-sub">${fINR(totalOver)} platform overpaid</div></div>
-    <div class="kpi"><div class="kpi-label">Net amount at risk</div><div class="kpi-val ${netExp>0?'kv-danger':'kv-warn'}">${fINR(Math.abs(netExp))}</div><div class="kpi-sub">${netExp>0?'Net owed to you':'Net owed to platform'}</div></div>
-  `;
+  // Populate month filter from dispatch dates on accuracy flags
+  populateMonthFilter('acf-month', flags.filter(f=>f.from_dispatch!==false), 'dispatch_date');
   renderAccuracy();
 }
 
 function renderAccuracy() {
   let rows = (DB.accuracyFlags||[]).filter(f => f.from_dispatch !== false);
+  const mf = getMonthFilter('acf-month');
   const tf = document.getElementById('acf-type').value;
   const pf = document.getElementById('acf-platform').value;
   const q  = document.getElementById('acf-search').value.toLowerCase();
 
-  rows = rows.filter(r=>{
+  const filtered = rows.filter(r=>{
+    if (mf && !monthMatchesFilter(r.dispatch_date, mf)) return false;
     if (tf&&r.issue_type!==tf) return false;
     if (pf&&r.platform!==pf) return false;
     if (q&&!r.order_no.toLowerCase().includes(q)&&!String(r.sku||'').toLowerCase().includes(q)) return false;
     return true;
   }).sort((a,b)=>Math.abs(b.diff)-Math.abs(a.diff));
 
-  const total = rows.length;
-  rows = rows.slice(0,200);
+  const isFiltered = !!(mf||tf||pf||q);
+  const total = filtered.length;
+
+  // Dynamic KPIs based on filtered set
+  const underpaid  = filtered.filter(f=>f.issue_type==='Underpaid');
+  const overpaid   = filtered.filter(f=>f.issue_type==='Overpaid');
+  const priceFlag  = filtered.filter(f=>f.issue_type==='Price Mismatch');
+  const shipFlag   = filtered.filter(f=>f.issue_type==='Shipping Anomaly');
+  const totalUnder = underpaid.reduce((s,f)=>s+Math.abs(f.diff),0);
+  const totalOver  = overpaid.reduce((s,f)=>s+Math.abs(f.diff),0);
+  const netExp     = totalUnder - totalOver;
+
+  document.getElementById('accuracy-kpis').innerHTML = `
+    <div class="kpi"><div class="kpi-label">Total discrepancies</div><div class="kpi-val kv-danger">${total.toLocaleString()}</div><div class="kpi-sub">${isFiltered?'Matching filters':'Payment amount wrong'}</div></div>
+    <div class="kpi"><div class="kpi-label">Underpaid</div><div class="kpi-val kv-danger">${underpaid.length.toLocaleString()}</div><div class="kpi-sub">${fINR(totalUnder)} owed to you</div></div>
+    <div class="kpi"><div class="kpi-label">Overpaid</div><div class="kpi-val kv-warn">${overpaid.length.toLocaleString()}</div><div class="kpi-sub">${fINR(totalOver)} platform overpaid</div></div>
+    <div class="kpi"><div class="kpi-label">Price mismatch</div><div class="kpi-val kv-warn">${priceFlag.length.toLocaleString()}</div><div class="kpi-sub">Wrong price charged</div></div>
+    <div class="kpi"><div class="kpi-label">Shipping anomaly</div><div class="kpi-val" style="color:var(--text2)">${shipFlag.length.toLocaleString()}</div><div class="kpi-sub">Outside rate card</div></div>
+    <div class="kpi"><div class="kpi-label">Net amount at risk</div><div class="kpi-val ${netExp>0?'kv-danger':'kv-warn'}">${fINR(Math.abs(netExp))}</div><div class="kpi-sub">${netExp>0?'Net owed to you':'Net owed to platform'}</div></div>
+  `;
+
+  const shown = filtered.slice(0,200);
+  const filterBadge = isFiltered
+    ? `<span style="background:rgba(200,240,74,.12);color:var(--accent);font-size:10px;padding:2px 8px;border-radius:4px;margin-left:8px;border:1px solid rgba(200,240,74,.3)">${total.toLocaleString()} order${total!==1?'s':''}</span>`
+    : '';
 
   let html=`
     <div class="tbl-wrap">
       <div class="tbl-head">
-        <span class="tbl-title">Payment amount mismatches</span>
-        <span class="tbl-count">Showing ${rows.length} of ${total} · sorted by largest discrepancy · click row for breakdown</span>
+        <span class="tbl-title">Payment amount mismatches${filterBadge}</span>
+        <span class="tbl-count">Showing ${shown.length} of ${total} · sorted by largest discrepancy · click row for breakdown</span>
       </div>
       <div class="tbl-scroll"><table class="dt">
         <thead><tr>
@@ -3524,7 +4103,7 @@ function renderAccuracy() {
         </tr></thead><tbody>
   `;
 
-  rows.forEach((r, idx) => {
+  shown.forEach((r, idx) => {
     const isUnder = r.issue_type==='Underpaid'||r.issue_type==='Fee Anomaly';
     const diffColor = isUnder?'color:var(--danger)':'color:var(--warn)';
     const hasBreakdown = (r.platform==='Amazon' && getAmazonItemsForOrder(r.order_no).length>0)
@@ -3549,7 +4128,7 @@ function renderAccuracy() {
       </tr>`;
   });
 
-  if(!rows.length) html+=`<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">No payment accuracy issues found</td></tr>`;
+  if(!shown.length) html+=`<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">No payment accuracy issues found</td></tr>`;
   html+='</tbody></table></div></div>';
   document.getElementById('accuracy-table').innerHTML = html;
 }
@@ -3557,22 +4136,40 @@ function renderAccuracy() {
 // ══════════════════════════════════════════════
 //  REFUNDS PAGE
 // ══════════════════════════════════════════════
+function exportAccuracyCSV() {
+  let rows = (DB.accuracyFlags||[]).filter(f => f.from_dispatch !== false);
+  const mf = getMonthFilter('acf-month');
+  const tf = document.getElementById('acf-type').value;
+  const pf = document.getElementById('acf-platform').value;
+  const q  = document.getElementById('acf-search').value.toLowerCase();
+  rows = rows.filter(r => {
+    if (mf && !monthMatchesFilter(r.dispatch_date, mf)) return false;
+    if (tf && r.issue_type !== tf) return false;
+    if (pf && r.platform !== pf) return false;
+    if (q && !r.order_no.toLowerCase().includes(q) && !String(r.sku||'').toLowerCase().includes(q)) return false;
+    return true;
+  }).sort((a,b) => Math.abs(b.diff) - Math.abs(a.diff));
+  if (!rows.length) { alert('No rows to export.'); return; }
+  const esc = v => `"${String(v??'').replace(/"/g,'""')}"`;
+  const headers = ['Order ID','Platform','SKU','Issue Type','Invoice (₹)','Expected Net (₹)','Actual Received (₹)','Difference (₹)','Commission %','Notes'];
+  const csvRows = [headers.join(',')];
+  rows.forEach(r => {
+    const notes = (r.extra_flags || []).join(' | ');
+    csvRows.push([esc(r.order_no),esc(r.platform),esc(r.sku||''),esc(r.issue_type),
+      Math.round(r.invoice||0),Math.round(r.expected||0),Math.round(r.actual||0),Math.round(r.diff||0),
+      r.commission_rate?(r.commission_rate*100).toFixed(1)+'%':'',esc(notes)].join(','));
+  });
+  const csv=csvRows.join('\n'),blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  const filters=[tf||'all-issues',pf||'all-platforms'].filter(Boolean).join('_');
+  a.href=url;a.download=`reconlens_accuracy_${filters}_${new Date().toISOString().substring(0,10)}.csv`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+
 function renderRefundsPage() {
   const flags = DB.refundFlags||[];
   document.getElementById('refunds-empty').style.display = (!flags.length||!DB.reconDone)?'block':'none';
   document.getElementById('refunds-body').style.display = (flags.length&&DB.reconDone)?'block':'none';
   if (!flags.length||!DB.reconDone) return;
-
-  const overRef  = flags.filter(f=>f.refund_status==='Over Refunded');
-  const underRef = flags.filter(f=>f.refund_status==='Under Refunded');
-  const correct  = flags.filter(f=>f.refund_status==='Correct'||f.refund_status==='Has Return');
-
-  document.getElementById('refunds-kpis').innerHTML = `
-    <div class="kpi"><div class="kpi-label">Total refunds</div><div class="kpi-val kv-warn">${flags.length}</div><div class="kpi-sub">Physical check needed</div></div>
-    <div class="kpi"><div class="kpi-label">Over refunded</div><div class="kpi-val kv-danger">${overRef.length}</div><div class="kpi-sub">Platform paid too much back</div></div>
-    <div class="kpi"><div class="kpi-label">Under refunded</div><div class="kpi-val kv-warn">${underRef.length}</div><div class="kpi-sub">Chase remaining refund</div></div>
-    <div class="kpi"><div class="kpi-label">Correct / has return</div><div class="kpi-val kv-success">${correct.length}</div><div class="kpi-sub">Amount matches order</div></div>
-  `;
   renderRefunds();
 }
 
@@ -3582,21 +4179,37 @@ function renderRefunds() {
   const pf = document.getElementById('ref-platform').value;
   const q  = document.getElementById('ref-search').value.toLowerCase();
 
-  rows = rows.filter(r=>{
+  const filtered = rows.filter(r=>{
     if (tf&&r.refund_status!==tf) return false;
     if (pf&&r.platform!==pf) return false;
     if (q&&!r.order_no.toLowerCase().includes(q)&&!String(r.sku||'').toLowerCase().includes(q)) return false;
     return true;
   });
 
-  const total = rows.length;
-  rows = rows.slice(0,200);
+  const isFiltered = !!(tf||pf||q);
+  const total = filtered.length;
+
+  // Dynamic KPIs
+  const overRef  = filtered.filter(f=>f.refund_status==='Over Refunded');
+  const underRef = filtered.filter(f=>f.refund_status==='Under Refunded');
+  const correct  = filtered.filter(f=>f.refund_status==='Correct'||f.refund_status==='Has Return');
+  document.getElementById('refunds-kpis').innerHTML = `
+    <div class="kpi"><div class="kpi-label">Total refunds</div><div class="kpi-val kv-warn">${total.toLocaleString()}</div><div class="kpi-sub">${isFiltered?'Matching filters':'Physical check needed'}</div></div>
+    <div class="kpi"><div class="kpi-label">Over refunded</div><div class="kpi-val kv-danger">${overRef.length.toLocaleString()}</div><div class="kpi-sub">Platform paid too much back</div></div>
+    <div class="kpi"><div class="kpi-label">Under refunded</div><div class="kpi-val kv-warn">${underRef.length.toLocaleString()}</div><div class="kpi-sub">Chase remaining refund</div></div>
+    <div class="kpi"><div class="kpi-label">Correct / has return</div><div class="kpi-val kv-success">${correct.length.toLocaleString()}</div><div class="kpi-sub">Amount matches order</div></div>
+  `;
+
+  const shown = filtered.slice(0,200);
+  const filterBadge = isFiltered
+    ? `<span style="background:rgba(200,240,74,.12);color:var(--accent);font-size:10px;padding:2px 8px;border-radius:4px;margin-left:8px;border:1px solid rgba(200,240,74,.3)">${total.toLocaleString()} order${total!==1?'s':''}</span>`
+    : '';
 
   let html=`
     <div class="tbl-wrap">
       <div class="tbl-head">
-        <span class="tbl-title">Refunded orders — verify physical return received</span>
-        <span class="tbl-count">Showing ${rows.length} of ${total}</span>
+        <span class="tbl-title">Refunded orders — verify physical return received${filterBadge}</span>
+        <span class="tbl-count">Showing ${shown.length} of ${total}</span>
       </div>
       <div class="tbl-scroll"><table class="dt">
         <thead><tr>
@@ -3605,16 +4218,13 @@ function renderRefunds() {
           <th class="num">Difference</th><th>Action needed</th>
         </tr></thead><tbody>
   `;
-  rows.forEach(r=>{
-    const isOver  = r.refund_status==='Over Refunded';
-    const isUnder = r.refund_status==='Under Refunded';
-    const isOk    = !isOver&&!isUnder;
-    const pillCls = isOver?'p-refund':isUnder?'p-flag':'p-paid';
-    const diffColor = isOver?'color:var(--danger)':isUnder?'color:var(--warn)':'color:var(--success)';
-    const action = isOver?'Raise dispute with platform':isUnder?'Chase remaining refund amount':'Verify physical return in warehouse';
+  shown.forEach(r=>{
+    const isOver=r.refund_status==='Over Refunded',isUnder=r.refund_status==='Under Refunded';
+    const pillCls=isOver?'p-refund':isUnder?'p-flag':'p-paid';
+    const diffColor=isOver?'color:var(--danger)':isUnder?'color:var(--warn)':'color:var(--success)';
+    const action=isOver?'Raise dispute with platform':isUnder?'Chase remaining refund amount':'Verify physical return in warehouse';
     html+=`<tr>
-      <td class="mono">${r.order_no}</td>
-      <td>${platPill(r.platform)}</td>
+      <td class="mono">${r.order_no}</td><td>${platPill(r.platform)}</td>
       <td class="dim">${r.sku||'—'}</td>
       <td><span class="pill ${pillCls}">${r.refund_status}</span></td>
       <td class="num">${r.order_value?fFull(r.order_value):'—'}</td>
@@ -3623,7 +4233,7 @@ function renderRefunds() {
       <td style="font-size:10px;color:var(--text3)">${action}</td>
     </tr>`;
   });
-  if(!rows.length) html+=`<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:24px">No matching refunds</td></tr>`;
+  if(!shown.length) html+=`<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:24px">No matching refunds</td></tr>`;
   html+='</tbody></table></div></div>';
   document.getElementById('refunds-table').innerHTML = html;
 }
@@ -3636,16 +4246,6 @@ function renderFlagsPage() {
   document.getElementById('flags-empty').style.display = (!flags.length||!DB.reconDone)?'block':'none';
   document.getElementById('flags-body').style.display = (flags.length&&DB.reconDone)?'block':'none';
   if (!flags.length||!DB.reconDone) return;
-
-  const byType = {};
-  flags.forEach(f=>{ byType[f.flag_type]=(byType[f.flag_type]||0)+1; });
-  const totalAtRisk = flags.reduce((s,f)=>s+(f.amount||0),0);
-
-  document.getElementById('flags-kpis').innerHTML = `
-    <div class="kpi"><div class="kpi-label">Total issues</div><div class="kpi-val kv-danger">${flags.length}</div><div class="kpi-sub">Require action</div></div>
-    <div class="kpi"><div class="kpi-label">Amount at risk</div><div class="kpi-val kv-warn">${fINR(totalAtRisk)}</div><div class="kpi-sub">Across all issues</div></div>
-    ${Object.entries(byType).map(([t,c])=>`<div class="kpi"><div class="kpi-label">${t}</div><div class="kpi-val">${c}</div><div class="kpi-sub">Orders</div></div>`).join('')}
-  `;
   renderFlags();
 }
 
@@ -3655,26 +4255,41 @@ function renderFlags() {
   const pf = document.getElementById('flf-platform').value;
   const q  = document.getElementById('flf-search').value.toLowerCase();
 
-  rows = rows.filter(r=>{
+  const filtered = rows.filter(r=>{
     if (tf&&r.flag_type!==tf) return false;
     if (pf&&r.platform!==pf) return false;
     if (q&&!String(r.order_no||'').toLowerCase().includes(q)&&!String(r.sku||'').toLowerCase().includes(q)) return false;
     return true;
   });
 
-  const total = rows.length;
-  rows = rows.slice(0,300);
+  const isFiltered = !!(tf||pf||q);
+  const total = filtered.length;
+
+  // Dynamic KPIs
+  const byType = {};
+  filtered.forEach(f=>{ byType[f.flag_type]=(byType[f.flag_type]||0)+1; });
+  const totalAtRisk = filtered.reduce((s,f)=>s+(f.amount||0),0);
+  document.getElementById('flags-kpis').innerHTML = `
+    <div class="kpi"><div class="kpi-label">Total issues</div><div class="kpi-val kv-danger">${total.toLocaleString()}</div><div class="kpi-sub">${isFiltered?'Matching filters':'Require action'}</div></div>
+    <div class="kpi"><div class="kpi-label">Amount at risk</div><div class="kpi-val kv-warn">${fINR(totalAtRisk)}</div><div class="kpi-sub">${isFiltered?'Filtered set':'Across all issues'}</div></div>
+    ${Object.entries(byType).map(([t,c])=>`<div class="kpi"><div class="kpi-label">${t}</div><div class="kpi-val">${c.toLocaleString()}</div><div class="kpi-sub">Orders</div></div>`).join('')}
+  `;
+
+  const shown = filtered.slice(0,300);
+  const filterBadge = isFiltered
+    ? `<span style="background:rgba(200,240,74,.12);color:var(--accent);font-size:10px;padding:2px 8px;border-radius:4px;margin-left:8px;border:1px solid rgba(200,240,74,.3)">${total.toLocaleString()} order${total!==1?'s':''}</span>`
+    : '';
 
   const typePill = t => {
-    const m = {'Not Paid':'p-delayed','Underpaid':'p-refund','Overpaid':'p-flag','Over Refunded':'p-refund','Under Refunded':'p-flag'};
+    const m={'Not Paid':'p-delayed','Underpaid':'p-refund','Overpaid':'p-flag','Over Refunded':'p-refund','Under Refunded':'p-flag'};
     return `<span class="pill ${m[t]||'p-delayed'}">${t}</span>`;
   };
 
   let html=`
     <div class="tbl-wrap">
       <div class="tbl-head">
-        <span class="tbl-title">All issues requiring action</span>
-        <span class="tbl-count">Showing ${rows.length} of ${total}</span>
+        <span class="tbl-title">All issues requiring action${filterBadge}</span>
+        <span class="tbl-count">Showing ${shown.length} of ${total}</span>
       </div>
       <div class="tbl-scroll"><table class="dt">
         <thead><tr>
@@ -3682,7 +4297,7 @@ function renderFlags() {
           <th>Issue type</th><th>Detail</th><th class="num">Amount at risk</th>
         </tr></thead><tbody>
   `;
-  rows.forEach(r=>{
+  shown.forEach(r=>{
     html+=`<tr>
       <td class="mono">${r.order_no||'—'}</td>
       <td>${platPill(r.platform||'Unknown')}</td>
@@ -3692,12 +4307,11 @@ function renderFlags() {
       <td class="num" style="${(r.amount||0)>0?'color:var(--warn)':'color:var(--text3)'}">${(r.amount||0)>0?fFull(r.amount):'—'}</td>
     </tr>`;
   });
-  if(!rows.length) html+=`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:24px">No matching flags</td></tr>`;
+  if(!shown.length) html+=`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:24px">No matching flags</td></tr>`;
   html+='</tbody></table></div></div>';
   document.getElementById('flags-table').innerHTML = html;
 }
 
-// ══════════════════════════════════════════════
 //  RATE CARD
 // ══════════════════════════════════════════════
 const RC_KEY = 'reconlens_ratecard';
@@ -3769,7 +4383,7 @@ function saveRateCard() {
   });
 
   try { localStorage.setItem(RC_KEY, JSON.stringify(rc)); } catch(e) {}
-  driveSaveRC(rc).catch(e => console.warn('Drive RC save failed:', e));
+  driveSaveRC(rc);
 }
 
 function saveFkRateCard() {
@@ -3782,7 +4396,7 @@ function saveFkRateCard() {
     tds_rate:           rc.tds_rate || 0.0849,
   };
   try { localStorage.setItem(RC_KEY, JSON.stringify(rc)); } catch(e) {}
-  driveSaveRC(rc).catch(e => console.warn('Drive RC save failed:', e));
+  driveSaveRC(rc);
 }
 
 function renderRateCard() {
@@ -3823,6 +4437,28 @@ function removeRateRow(idx) {
   renderRateCard();
 }
 
+// Expected referral rate for a SKU based on rate card slab
+function getExpectedRate(sku, unitPrice) {
+  const rc  = getRateCard();
+  const cat = (window._skuCatMap && window._skuCatMap[sku]) || 'Uncategorized';
+  const row = rc.categories.find(c => c.category === cat)
+           || rc.categories.find(c => c.category === 'Uncategorized')
+           || rc.categories[0];
+  if (!row) return 0.155;
+  const threshold = row.threshold || 15000;
+  return ((unitPrice || 0) > threshold ? row.rate_above : row.rate_below) / 100;
+}
+
+// Expected closing fee for a SKU from rate card
+function getExpectedClosingFee(sku) {
+  const rc  = getRateCard();
+  const cat = (window._skuCatMap && window._skuCatMap[sku]) || 'Uncategorized';
+  const row = rc.categories.find(c => c.category === cat)
+           || rc.categories.find(c => c.category === 'Uncategorized')
+           || rc.categories[0];
+  return row ? (row.closing_fee || 100) : 100;
+}
+
 // Build SKU→Category map from amazon items at runtime
 function buildSkuCatMap() {
   window._skuCatMap = {};
@@ -3860,11 +4496,27 @@ function getPricingHistory() {
 
 function savePricingData(data) {
   try { localStorage.setItem(PRICING_KEY, JSON.stringify(data)); } catch(e) {}
-  driveSavePricing().catch(e => console.warn('Drive pricing save failed:', e));
+  driveSavePricing();
 }
 
 function savePricingHistory(hist) {
   try { localStorage.setItem(PRICING_HIST_KEY, JSON.stringify(hist)); } catch(e) {}
+  driveSavePricing();
+}
+
+// Resolve any SKU format (Flipkart, website, master) to the Amazon SKU key used in pricing
+function resolveToAmazonSku(sku) {
+  if (!sku) return null;
+  const pricing = getPricingData();
+  // Direct match (Amazon SKU)
+  if (pricing[sku]) return sku;
+  // Search by Flipkart SKU, master SKU, web SKU
+  for (const [amazonSku, entry] of Object.entries(pricing)) {
+    if (entry.fk_sku === sku || entry.master_sku === sku || entry.web_sku === sku) {
+      return amazonSku;
+    }
+  }
+  return null;
 }
 
 // Get the correct price for a SKU on a given date
@@ -3873,8 +4525,11 @@ function getPriceOnDate(sku, dateStr) {
   const history = getPricingHistory();
   if (!sku) return null;
 
+  // Resolve to Amazon SKU key if needed
+  const key = resolveToAmazonSku(sku) || sku;
+
   // Check history for a price valid on that date
-  const hist = history[sku] || [];
+  const hist = history[key] || [];
   const target = dateStr ? new Date(dateStr) : new Date();
   for (const entry of hist.slice().reverse()) {
     const from = new Date(entry.effective_from);
@@ -3882,7 +4537,18 @@ function getPriceOnDate(sku, dateStr) {
     if (target >= from && target <= to) return entry.price;
   }
   // Fall back to current price
-  return pricing[sku]?.price || null;
+  return pricing[key]?.price || null;
+}
+
+function clearPricingData() {
+  if (!confirm('Clear all pricing data? This will remove all SKU prices and history. This cannot be undone.')) return;
+  localStorage.removeItem(PRICING_KEY);
+  localStorage.removeItem(PRICING_HIST_KEY);
+  setBadge('nb-pricing', '—', 'nb-muted');
+  document.getElementById('pricing-table-wrap').style.display = 'none';
+  document.getElementById('pricing-file-status').textContent = 'Pricing data cleared';
+  document.getElementById('pricing-file-status').style.color = 'var(--text3)';
+  document.getElementById('pricing-file-input').value = '';
 }
 
 function loadPricingFile(input) {
@@ -4108,7 +4774,7 @@ function renderPricingTable() {
       <div class="tbl-scroll"><table class="dt"><thead><tr>
         <th>Amazon SKU</th><th>Master SKU</th><th>Product name</th>
         <th>ASIN</th><th>FK SKU</th>
-        <th class="num">Current price</th><th>Last updated</th><th>Status</th><th>History</th>
+        <th class="num">Current price</th><th>Last updated</th><th>Status</th><th>History</th><th></th>
       </tr></thead><tbody>
   `;
 
@@ -4131,9 +4797,11 @@ function renderPricingTable() {
         <td>${hasHistory
           ? `<span class="pill p-flag" style="font-size:9px">${hist.length} prices</span>`
           : `<span style="color:var(--text3);font-size:10px">Current only</span>`}</td>
+        <td><button class="btn btn-sm" style="padding:2px 8px;font-size:10px"
+            onclick="event.stopPropagation();openPriceEdit('${s.sku}')">Edit</button></td>
       </tr>
       <tr class="breakdown-row" id="brow-${rowId}">
-        <td colspan="9"><div class="breakdown-panel" id="bpanel-${rowId}"></div></td>
+        <td colspan="10"><div class="breakdown-panel" id="bpanel-${rowId}"></div></td>
       </tr>`;
   });
 
@@ -4190,21 +4858,35 @@ function getDiscountSkus() {
 }
 function saveDiscountEvents(events) {
   try { localStorage.setItem(DISCOUNT_KEY, JSON.stringify(events)); } catch(e) {}
-  driveSaveDiscounts().catch(e => console.warn('Drive discounts save failed:', e));
+  driveSaveDiscounts();
 }
 function saveDiscountSkus(skus) {
   try { localStorage.setItem(DISCOUNT_SKU_KEY, JSON.stringify(skus)); } catch(e) {}
-  // driveSaveDiscounts already called by saveDiscountEvents in the same flow
 }
 
 // ── Temp SKU staging (before saving event) ──
 let _deStagedSkus = []; // [{sku, discount_pct}]
+let _deMode = 'overall'; // 'overall' | 'persku'
+
+function deSetMode(mode) {
+  _deMode = mode;
+  document.getElementById('de-overall-section').style.display = mode === 'overall' ? 'block' : 'none';
+  document.getElementById('de-persku-section').style.display  = mode === 'persku'  ? 'block' : 'none';
+  const btnOverall = document.getElementById('de-mode-overall');
+  const btnPerSku  = document.getElementById('de-mode-persku');
+  const desc       = document.getElementById('de-mode-desc');
+  const accent = 'background:var(--accent);color:#0c0c0e;border-color:var(--accent);font-weight:600';
+  btnOverall.style.cssText = mode === 'overall' ? accent : '';
+  btnPerSku.style.cssText  = mode === 'persku'  ? accent : '';
+  desc.textContent = mode === 'overall'
+    ? 'One discount % applies to all SKUs in this event window. Every order during this period will use this discount.'
+    : 'Specify a different discount % per SKU. Only listed SKUs will be discounted — others stay at BAU price.';
+}
 
 function deAddSkuRow() {
   const sku = document.getElementById('de-sku').value.trim();
   const pct = parseFloat(document.getElementById('de-sku-pct').value);
   if (!sku || isNaN(pct)) { alert('Enter both SKU and discount %'); return; }
-  // Upsert
   const existing = _deStagedSkus.findIndex(r => r.sku === sku);
   if (existing >= 0) _deStagedSkus[existing].discount_pct = pct;
   else _deStagedSkus.push({ sku, discount_pct: pct });
@@ -4265,36 +4947,52 @@ function renderDeSkuPreview() {
 }
 
 function saveDiscountEvent() {
-  const name   = document.getElementById('de-name').value.trim();
-  const plat   = document.getElementById('de-platform').value;
-  const start  = document.getElementById('de-start').value;
-  const end    = document.getElementById('de-end').value;
-  const reward = parseFloat(document.getElementById('de-reward').value);
-  const notes  = document.getElementById('de-notes').value.trim();
+  const name  = document.getElementById('de-name').value.trim();
+  const plat  = document.getElementById('de-platform').value;
+  const start = getDeDate('de-start');
+  const end   = getDeDate('de-end');
+  const notes = document.getElementById('de-notes').value.trim();
 
   if (!name || !start || !end) { alert('Event name, start date and end date are required.'); return; }
   if (new Date(start) > new Date(end)) { alert('Start date must be before end date.'); return; }
-  if (!_deStagedSkus.length) { alert('Add at least one SKU with a discount % before saving.'); return; }
+
+  let skusToSave = [];
+  if (_deMode === 'overall') {
+    const pct = parseFloat(document.getElementById('de-overall-pct').value);
+    if (isNaN(pct) || pct <= 0) { alert('Enter a discount % for the overall event.'); return; }
+    skusToSave = [{ sku: '__ALL__', discount_pct: pct }];
+  } else {
+    if (!_deStagedSkus.length) { alert('Add at least one SKU with a discount % before saving.'); return; }
+    skusToSave = [..._deStagedSkus];
+  }
 
   const id = Date.now();
   const events = getDiscountEvents();
-  events.push({ id, name, platform: plat, start_date: start, end_date: end,
-    reward_rate: isNaN(reward) ? null : reward, notes,
-    sku_count: _deStagedSkus.length,
-    created_at: new Date().toISOString().substring(0,10) });
+  events.push({
+    id, name, platform: plat, start_date: start, end_date: end,
+    reward_rate: null, notes, mode: _deMode,
+    sku_count: _deMode === 'overall' ? 'All' : skusToSave.length,
+    created_at: new Date().toISOString().substring(0,10)
+  });
   saveDiscountEvents(events);
-
   const allSkus = getDiscountSkus();
-  allSkus[id] = [..._deStagedSkus];
+  allSkus[id] = skusToSave;
   saveDiscountSkus(allSkus);
 
   // Reset form
-  ['de-name','de-start','de-end','de-reward','de-notes'].forEach(id => document.getElementById(id).value='');
+  ['de-name','de-notes','de-overall-pct'].forEach(fid => {
+    const el = document.getElementById(fid); if (el) el.value = '';
+  });
+  dpClear('de-start-wrap');
+  dpClear('de-end-wrap');
   _deStagedSkus = [];
+  _deMode = 'overall';
+  deSetMode('overall');
   renderDeSkuPreview();
   document.getElementById('de-csv-status').textContent = '';
   setBadge('nb-discounts', events.length||'—', events.length?'nb-warn':'nb-muted');
   _masterCache = null;
+  markReconStale();
   renderDiscountEvents();
 }
 
@@ -4306,6 +5004,7 @@ function deleteDiscountEvent(id) {
   saveDiscountSkus(allSkus);
   setBadge('nb-discounts', events.length||'—', events.length?'nb-warn':'nb-muted');
   _masterCache = null;
+  markReconStale();
   renderDiscountEvents();
 }
 
@@ -4341,10 +5040,11 @@ function renderDiscountEvents() {
       <td style="font-weight:600">${e.name}
         ${isActive?'<span class="pill p-paid" style="font-size:9px;margin-left:6px">Active</span>':''}
         ${isPast?'<span style="color:var(--text3);font-size:10px;margin-left:6px">Past</span>':''}
+        ${e.mode==='overall'?'<span class="pill p-flag" style="font-size:9px;margin-left:6px">Overall</span>':'<span class="pill p-multi" style="font-size:9px;margin-left:6px">Per-SKU</span>'}
       </td>
       <td>${platPill(e.platform==='Both'?'Amazon':e.platform)}${e.platform==='Both'?' + FK':''}</td>
       <td class="dim">${fDate(e.start_date)} → ${fDate(e.end_date)}</td>
-      <td class="num">${e.sku_count||0}</td>
+      <td class="num">${e.mode==='overall'?'<span style="color:var(--warn);font-size:10px">All</span>':e.sku_count||0}</td>
       <td class="num" style="color:var(--success)">${e.reward_rate!=null?e.reward_rate+'%':'—'}</td>
       <td class="dim" style="font-size:10px">${e.notes||'—'}</td>
       <td><button class="btn btn-sm btn-danger" style="padding:2px 8px" onclick="event.stopPropagation();deleteDiscountEvent(${e.id})">✕</button></td>
@@ -4398,22 +5098,26 @@ function getExpectedPriceInfo(sku, dateStr) {
   const d = new Date(dateStr);
   if (isNaN(d)) return { price: null, source: null };
 
-  // Check discount events — find one covering this date that has this SKU
+  // Resolve Flipkart/website SKU to Amazon SKU key for pricing lookup
+  const resolvedSku = resolveToAmazonSku(sku) || sku;
+
+  // Check discount events — match on resolved SKU, original SKU, or __ALL__ (overall event)
   for (const e of events) {
     const matches = e.platform === 'Both' || e.platform === 'Amazon' || e.platform === 'Flipkart';
     if (!matches) continue;
     if (d < new Date(e.start_date) || d > new Date(e.end_date)) continue;
     const skuList = allSkus[e.id] || [];
-    const skuRow  = skuList.find(r => r.sku === sku);
+    // Check: exact SKU match, resolved SKU match, or overall event (__ALL__)
+    const skuRow = skuList.find(r => r.sku === sku || r.sku === resolvedSku || r.sku === '__ALL__');
     if (!skuRow) continue;
-    const bau = getPriceOnDate(sku, dateStr);
+    const bau = getPriceOnDate(resolvedSku, dateStr);
     if (!bau) return { price: null, source: null };
     const eventPrice = Math.round(bau * (1 - skuRow.discount_pct / 100));
     return { price: eventPrice, source: 'event', event: e, discount_pct: skuRow.discount_pct, bau };
   }
 
   // Fall back to BAU
-  const bau = getPriceOnDate(sku, dateStr);
+  const bau = getPriceOnDate(resolvedSku, dateStr);
   return bau ? { price: bau, source: 'bau', bau } : { price: null, source: null };
 }
 
@@ -4444,388 +5148,55 @@ function initPricingDiscounts() {
 }
 
 // ══════════════════════════════════════════════
-//  GOOGLE DRIVE INTEGRATION
+//  PERSISTENCE — localStorage
 // ══════════════════════════════════════════════
-const GDRIVE_CLIENT_ID = '801481705797-4lr6orueunsbdk5vhhe578bga4ai6lhq.apps.googleusercontent.com';
-const GDRIVE_FOLDER_ID = '1oCWEmCOrDYfxtQqCE7Ui-O756_HhUCpF';
-const GDRIVE_SCOPE     = 'https://www.googleapis.com/auth/drive';
-const GDRIVE_SCOPE_VER = 'v2'; // bump this if scope changes to force re-auth
+const STORAGE_KEY    = 'reconlens_v2';
+const REGISTRY_KEY   = 'reconlens_registry'; // duplicate detection registry
 
-// File name map — each localStorage key maps to a Drive filename
-const DRIVE_FILES = {
-  reconlens_v2:               'reconlens_db.json',
-  reconlens_ratecard:         'reconlens_ratecard.json',
-  reconlens_pricing:          'reconlens_pricing.json',
-  reconlens_pricing_history:  'reconlens_pricing_history.json',
-  reconlens_discounts:        'reconlens_discounts.json',
-  reconlens_discount_skus:    'reconlens_discount_skus.json',
-};
-
-// In-memory cache of Drive file IDs (avoids repeated search calls)
-const _driveFileIds = {};
-
-// Current OAuth token
-let _driveToken = null;
-let _driveUser  = null;
-
-// ── Auth ──────────────────────────────────────
-const _isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-let _tokenClient = null; // created once GSI loads, called synchronously on tap
-
-function initGoogleAuth() {
-  // Scope version check
-  if (localStorage.getItem('rl_scope_ver') !== GDRIVE_SCOPE_VER) {
-    localStorage.removeItem('rl_user');
-    localStorage.removeItem('rl_consented');
-    localStorage.setItem('rl_scope_ver', GDRIVE_SCOPE_VER);
-  }
-
-  const tryInit = () => {
-    if (!window.google?.accounts?.oauth2) { setTimeout(tryInit, 100); return; }
-
-    // Pre-create token client so it's ready for synchronous call on button tap
-    _tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: GDRIVE_CLIENT_ID,
-      scope: GDRIVE_SCOPE + ' https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
-      callback: async (tokenResponse) => {
-        if (tokenResponse.error) {
-          showLoginError('Sign in failed: ' + tokenResponse.error);
-          return;
-        }
-        _driveToken = tokenResponse.access_token;
-        localStorage.setItem('rl_consented', '1');
-        setTimeout(() => _tokenClient && _tokenClient.requestAccessToken({ prompt: '' }), (tokenResponse.expires_in - 300) * 1000);
-        await _fetchUserInfo();
-        await onSignedIn();
-      },
-    });
-
-    // Show sign-in button
-    document.getElementById('google-signin-btn').innerHTML = `
-      <button id="gsi-btn" style="
-        display:flex;align-items:center;gap:12px;padding:12px 24px;
-        background:#fff;border:none;border-radius:4px;cursor:pointer;
-        font-family:sans-serif;font-size:14px;color:#3c4043;font-weight:500;
-        box-shadow:0 1px 3px rgba(0,0,0,.3);min-width:220px;justify-content:center
-      ">
-        <svg width="18" height="18" viewBox="0 0 18 18">
-          <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
-          <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
-          <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
-          <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/>
-        </svg>
-        Sign in with Google
-      </button>`;
-
-    // Attach click handler — must call requestAccessToken synchronously inside click
-    document.getElementById('gsi-btn').addEventListener('click', () => {
-      if (!_tokenClient) { showLoginError('Not ready yet, please try again.'); return; }
-      const prompt = localStorage.getItem('rl_consented') ? '' : 'consent';
-      _tokenClient.requestAccessToken({ prompt });
-    });
-
-    // Try silent restore if we have a saved user
-    const savedUser = localStorage.getItem('rl_user');
-    if (savedUser) {
-      try {
-        _driveUser = JSON.parse(savedUser);
-        // Silent token — no popup, works without user gesture
-        _tokenClient.requestAccessToken({ prompt: '' });
-        return;
-      } catch(e) {}
+// ── Settlement registry helpers ──
+function getRegistry() {
+  try {
+    const s = localStorage.getItem(REGISTRY_KEY);
+    if (s) {
+      const r = JSON.parse(s);
+      return {
+        amazon:   new Set(r.amazon   || []),
+        flipkart: new Set(r.flipkart || []),
+        dispatch: new Set(r.dispatch || []),
+      };
     }
-  };
-  tryInit();
+  } catch(e) {}
+  return { amazon: new Set(), flipkart: new Set(), dispatch: new Set() };
 }
 
-async function _fetchUserInfo() {
+function saveRegistry(reg) {
   try {
-    const resp = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-      headers: { 'Authorization': 'Bearer ' + _driveToken }
-    });
-    const info = await resp.json();
-    _driveUser = { name: info.name, email: info.email, picture: info.picture };
-    localStorage.setItem('rl_user', JSON.stringify(_driveUser));
+    localStorage.setItem(REGISTRY_KEY, JSON.stringify({
+      amazon:   [...reg.amazon],
+      flipkart: [...reg.flipkart],
+      dispatch: [...reg.dispatch],
+    }));
   } catch(e) {}
 }
 
-function signOut() {
-  localStorage.removeItem('rl_user');
-  localStorage.removeItem('rl_consented');
-  _driveToken = null;
-  _driveUser  = null;
-  _tokenClient = null;
-  document.querySelector('.main').style.display         = 'none';
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('user-info').style.display    = 'none';
-  initGoogleAuth();
+function clearRegistry() {
+  localStorage.removeItem(REGISTRY_KEY);
 }
-
-
-async function onSignedIn() {
-  document.getElementById('login-screen').style.display = 'none';
-  document.querySelector('.main').style.display = 'flex';
-
-  if (_driveUser) {
-    document.getElementById('user-info').style.display = 'block';
-    document.getElementById('user-name').textContent   = _driveUser.name  || '';
-    document.getElementById('user-email').textContent  = _driveUser.email || '';
-    if (_driveUser.picture) {
-      const av = document.getElementById('user-avatar');
-      av.src = _driveUser.picture; av.style.display = 'block';
-    }
-    updateMobileUserInfo(_driveUser);
-  }
-
-  showSync('Loading from Drive…');
-  await driveLoadAll();
-  hideSync();
-  initPricingDiscounts();
-
-  if (DB.ordersLoaded || DB.reconDone) {
-    restoreUI();
-    addClearButton();
-    if (isMobileView()) mobileNav('recon');
-  }
-
-  // Auto-refresh when user switches back to this tab
-  if (!window._visListenerAdded) {
-    window._visListenerAdded = true;
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible' && _driveToken) refreshFromDrive();
-    });
-  }
-}
-
-// Pull latest data from Drive without re-authenticating
-async function refreshFromDrive() {
-  Object.keys(_driveFileIds).forEach(k => delete _driveFileIds[k]);
-  showSync('Refreshing…');
-  await driveLoadAll();
-  hideSync();
-  initPricingDiscounts();
-  if (DB.ordersLoaded || DB.reconDone) {
-    restoreUI();
-    _masterCache = null;
-    const activePage = document.querySelector('.nav-item.active')?.dataset?.page;
-    if (activePage) nav(activePage);
-  }
-}
-
-function signOut() {
-  google.accounts.id.disableAutoSelect();
-  localStorage.removeItem('rl_user');
-  _driveToken = null;
-  _driveUser  = null;
-  document.querySelector('.main').style.display         = 'none';
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('user-info').style.display    = 'none';
-}
-
-
-function showLoginError(msg) {
-  const el = document.getElementById('login-error');
-  el.textContent = msg; el.style.display = 'block';
-}
-
-// ── Sync indicator ────────────────────────────
-function showSync(msg) {
-  const el = document.getElementById('sync-indicator');
-  document.getElementById('sync-text').textContent = msg || 'Saving…';
-  document.getElementById('sync-dot').style.background = 'var(--accent)';
-  el.style.display = 'flex';
-}
-function hideSync() {
-  setTimeout(() => { document.getElementById('sync-indicator').style.display = 'none'; }, 1200);
-}
-function syncError(msg) {
-  document.getElementById('sync-text').textContent = msg || 'Sync error';
-  document.getElementById('sync-dot').style.background = 'var(--danger)';
-  setTimeout(() => { document.getElementById('sync-indicator').style.display = 'none'; }, 3000);
-}
-
-// ── Drive REST helpers ────────────────────────
-async function driveRequest(url, options = {}) {
-  if (!_driveToken) return null;
-  const resp = await fetch(url, {
-    ...options,
-    headers: { 'Authorization': 'Bearer ' + _driveToken, ...(options.headers || {}) },
-  });
-  if (resp.status === 401) { signOut(); return null; }
-  return resp;
-}
-
-// Find a file in the folder by name — returns file ID or null
-async function driveFindFile(filename) {
-  if (_driveFileIds[filename]) return _driveFileIds[filename];
-  const q = encodeURIComponent(`name='${filename}' and '${GDRIVE_FOLDER_ID}' in parents and trashed=false`);
-  const url = `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&spaces=drive&includeItemsFromAllDrives=true&supportsAllDrives=true`;
-  const resp = await driveRequest(url);
-  if (!resp || !resp.ok) {
-    console.warn('[ReconLens] driveFindFile failed for', filename, resp?.status);
-    return null;
-  }
-  const data = await resp.json();
-  console.log('[ReconLens] driveFindFile', filename, '→', data.files?.length, 'results', data.files);
-  const file = data.files?.[0];
-  if (file) { _driveFileIds[filename] = file.id; return file.id; }
-  return null;
-}
-
-// Read a file from Drive — returns parsed JSON or null
-async function driveRead(filename) {
-  const fileId = await driveFindFile(filename);
-  if (!fileId) return null;
-  const resp = await driveRequest(
-    `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&supportsAllDrives=true`
-  );
-  if (!resp || !resp.ok) return null;
-  try { return await resp.json(); } catch(e) { return null; }
-}
-
-// Write a file to Drive — creates if not exists, updates if exists
-async function driveWrite(filename, data) {
-  const body   = JSON.stringify(data);
-  const blob   = new Blob([body], { type: 'application/json' });
-  const fileId = await driveFindFile(filename);
-
-  if (fileId) {
-    const resp = await driveRequest(
-      `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media&supportsAllDrives=true`,
-      { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body }
-    );
-    return resp?.ok || false;
-  } else {
-    const meta = JSON.stringify({ name: filename, parents: [GDRIVE_FOLDER_ID] });
-    const form = new FormData();
-    form.append('metadata', new Blob([meta], { type: 'application/json' }));
-    form.append('file', blob);
-    const resp = await driveRequest(
-      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id&supportsAllDrives=true',
-      { method: 'POST', body: form }
-    );
-    if (resp?.ok) {
-      const result = await resp.json();
-      if (result.id) _driveFileIds[filename] = result.id;
-      return true;
-    }
-    return false;
-  }
-}
-
-// ── Load all Drive files into memory ─────────
-async function driveLoadAll() {
-  console.log('[ReconLens] driveLoadAll — token:', _driveToken ? 'present' : 'MISSING');
-  console.log('[ReconLens] Looking in folder:', GDRIVE_FOLDER_ID);
-
-  const db = await driveRead('reconlens_db.json');
-  console.log('[ReconLens] reconlens_db.json:', db ? 'FOUND' : 'NOT FOUND');
-  if (db) {
-    DB.ordersRaw         = db.ordersRaw         || [];
-    DB.shipments         = db.shipments          || {};
-    DB.ordersIndex       = db.ordersIndex        || {};
-    DB.amazonItems       = db.amazonItems        || [];
-    DB.amazonSettlements = db.amazonSettlements  || [];
-    DB.flipkartLedger    = db.flipkartLedger     || [];
-    DB.flipkartNeft      = db.flipkartNeft       || [];
-    DB.reconOutput       = db.reconOutput        || [];
-    DB.flags             = db.flags              || [];
-    DB.accuracyFlags     = db.accuracyFlags      || [];
-    DB.refundFlags       = db.refundFlags        || [];
-    DB.ordersLoaded      = db.ordersLoaded       || false;
-    DB.amazonLoaded      = db.amazonLoaded       || false;
-    DB.flipkartLoaded    = db.flipkartLoaded     || false;
-    DB.d2cLoaded         = db.d2cLoaded          || false;
-    DB.reconDone         = db.reconDone          || false;
-  }
-
-  // Rate card — merge into localStorage key so getRateCard() works unchanged
-  const rc = await driveRead('reconlens_ratecard.json');
-  if (rc) try { localStorage.setItem('reconlens_ratecard', JSON.stringify(rc)); } catch(e) {}
-
-  // Pricing
-  const pricing = await driveRead('reconlens_pricing.json');
-  if (pricing) try { localStorage.setItem('reconlens_pricing', JSON.stringify(pricing)); } catch(e) {}
-
-  const pricingHist = await driveRead('reconlens_pricing_history.json');
-  if (pricingHist) try { localStorage.setItem('reconlens_pricing_history', JSON.stringify(pricingHist)); } catch(e) {}
-
-  // Discounts
-  const discounts = await driveRead('reconlens_discounts.json');
-  if (discounts) try { localStorage.setItem('reconlens_discounts', JSON.stringify(discounts)); } catch(e) {}
-
-  const discountSkus = await driveRead('reconlens_discount_skus.json');
-  if (discountSkus) try { localStorage.setItem('reconlens_discount_skus', JSON.stringify(discountSkus)); } catch(e) {}
-}
-
-// ── Save helpers (Drive + localStorage mirror) ─
-async function driveSaveDB() {
-  showSync('Saving…');
-  const payload = {
-    ordersRaw: DB.ordersRaw, shipments: DB.shipments, ordersIndex: DB.ordersIndex,
-    amazonItems: DB.amazonItems, amazonSettlements: DB.amazonSettlements,
-    flipkartLedger: DB.flipkartLedger, flipkartNeft: DB.flipkartNeft,
-    reconOutput: DB.reconOutput, flags: DB.flags,
-    accuracyFlags: DB.accuracyFlags, refundFlags: DB.refundFlags,
-    ordersLoaded: DB.ordersLoaded, amazonLoaded: DB.amazonLoaded,
-    flipkartLoaded: DB.flipkartLoaded, d2cLoaded: DB.d2cLoaded, reconDone: DB.reconDone,
-  };
-  const ok = await driveWrite('reconlens_db.json', payload);
-  // Also mirror to localStorage as fallback
-  try { localStorage.setItem('reconlens_v2', JSON.stringify(payload)); } catch(e) {}
-  ok ? hideSync() : syncError('Save failed');
-}
-
-async function driveSaveRC(rc) {
-  showSync('Saving rate card…');
-  await driveWrite('reconlens_ratecard.json', rc);
-  hideSync();
-}
-
-async function driveSavePricing() {
-  showSync('Saving pricing…');
-  const p  = getPricingData();
-  const ph = getPricingHistory();
-  await Promise.all([
-    driveWrite('reconlens_pricing.json', p),
-    driveWrite('reconlens_pricing_history.json', ph),
-  ]);
-  hideSync();
-}
-
-async function driveSaveDiscounts() {
-  showSync('Saving discount events…');
-  const d  = getDiscountEvents();
-  const ds = getDiscountSkus();
-  await Promise.all([
-    driveWrite('reconlens_discounts.json', d),
-    driveWrite('reconlens_discount_skus.json', ds),
-  ]);
-  hideSync();
-}
-
-
-// ══════════════════════════════════════════════
-//  PERSISTENCE — localStorage
-// ══════════════════════════════════════════════
-const STORAGE_KEY = 'reconlens_v2';
 
 function saveDB() {
-  // Drive is the primary store — localStorage is just a local mirror
-  driveSaveDB().catch(e => console.warn('Drive save failed:', e));
-  // Sync mirror
   try {
     const payload = {
       ordersRaw: DB.ordersRaw, shipments: DB.shipments, ordersIndex: DB.ordersIndex,
       amazonItems: DB.amazonItems, amazonSettlements: DB.amazonSettlements,
-      flipkartLedger: DB.flipkartLedger, flipkartNeft: DB.flipkartNeft,
+      flipkartLedger: DB.flipkartLedger, flipkartNeft: DB.flipkartNeft, d2cRaw: DB.d2cRaw,
       reconOutput: DB.reconOutput, flags: DB.flags,
       accuracyFlags: DB.accuracyFlags, refundFlags: DB.refundFlags,
       ordersLoaded: DB.ordersLoaded, amazonLoaded: DB.amazonLoaded,
       flipkartLoaded: DB.flipkartLoaded, d2cLoaded: DB.d2cLoaded, reconDone: DB.reconDone,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-  } catch(e) {}
+    driveSaveDB(); // async, non-blocking
+  } catch(e) { console.warn('ReconLens: could not save —', e.message); }
 }
 
 function loadDB() {
@@ -4841,6 +5212,7 @@ function loadDB() {
     DB.amazonSettlements = saved.amazonSettlements  || [];
     DB.flipkartLedger    = saved.flipkartLedger     || [];
     DB.flipkartNeft      = saved.flipkartNeft       || [];
+    DB.d2cRaw            = saved.d2cRaw             || [];
     DB.reconOutput       = saved.reconOutput        || [];
     DB.flags             = saved.flags              || [];
     DB.accuracyFlags     = saved.accuracyFlags      || [];
@@ -4858,14 +5230,23 @@ function loadDB() {
   }
 }
 
-async function clearStorage() {
-  showSync('Clearing…');
-  // Wipe Drive DB file
-  await driveWrite('reconlens_db.json', {});
-  // Wipe localStorage
+function clearStorage() {
+  if (!confirm('Clear all saved data and start fresh?')) return;
   localStorage.removeItem(STORAGE_KEY);
-  hideSync();
+  // Wipe Drive DB file
+  if (_driveToken) {
+    driveWrite(DRIVE_FILES.db, {}).catch(() => {});
+  }
   location.reload();
+}
+
+function clearRegistryPrompt() {
+  const reg = getRegistry();
+  const msg = `Settlement registry contains:\n• Amazon: ${reg.amazon.size} settlement ID(s)\n• Flipkart: ${reg.flipkart.size} NEFT ID(s)\n• Dispatch: ${reg.dispatch.size} file hash(es)\n\nClearing this will allow the same files to be uploaded again without duplicate warnings.\n\nClear registry?`;
+  if (confirm(msg)) {
+    clearRegistry();
+    alert('Registry cleared. You can now re-upload previously processed files.');
+  }
 }
 
 function restoreUI() {
@@ -4912,16 +5293,64 @@ function restoreUI() {
 }
 
 // Add a "Clear all data" button to topbar when data is loaded
+function toggleTheme() {
+  const html = document.documentElement;
+  const isLight = html.getAttribute('data-theme') === 'light';
+  html.setAttribute('data-theme', isLight ? 'dark' : 'light');
+  localStorage.setItem('reconlens_theme', isLight ? 'dark' : 'light');
+  const btn = document.getElementById('theme-toggle-btn');
+  if (btn) btn.innerHTML = isLight ? '☀' : '☾';
+}
+
 function addClearButton() {
   const actions = document.getElementById('topbar-actions');
   if (document.getElementById('btn-clear-all')) return;
+
+  // Theme toggle
+  const themeBtn = document.createElement('button');
+  themeBtn.className = 'btn btn-sm';
+  themeBtn.id = 'theme-toggle-btn';
+  themeBtn.title = 'Toggle light/dark mode';
+  themeBtn.style.cssText = 'font-size:14px;padding:4px 8px;line-height:1';
+  const savedTheme = localStorage.getItem('reconlens_theme');
+  themeBtn.innerHTML = savedTheme === 'light' ? '☾' : '☀';
+  themeBtn.onclick = toggleTheme;
+  actions.appendChild(themeBtn);
+
+  // Registry button
+  const regBtn = document.createElement('button');
+  regBtn.className = 'btn btn-sm';
+  regBtn.id = 'btn-registry';
+  regBtn.title = 'View / clear duplicate detection registry';
+  regBtn.style.cssText = 'font-size:11px';
+  const reg = getRegistry();
+  regBtn.innerHTML = `🗂 Registry (${reg.amazon.size + reg.flipkart.size + reg.dispatch.size})`;
+  regBtn.onclick = clearRegistryPrompt;
+  actions.appendChild(regBtn);
+
+  // Refresh from Drive
+  const refreshBtn = document.createElement('button');
+  refreshBtn.className = 'btn btn-sm';
+  refreshBtn.id = 'btn-refresh-drive';
+  refreshBtn.title = 'Refresh data from Google Drive';
+  refreshBtn.style.cssText = 'font-size:11px';
+  refreshBtn.innerHTML = '↺ Refresh from Drive';
+  refreshBtn.onclick = refreshFromDrive;
+  actions.appendChild(refreshBtn);
+
+  // Clear data button
   const btn = document.createElement('button');
   btn.className = 'btn btn-danger btn-sm';
   btn.id = 'btn-clear-all';
   btn.title = 'Clear all saved data';
   btn.innerHTML = `<svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 4h12M6 4V2h4v2M13 4l-1 10H4L3 4"/></svg> Clear data`;
-  btn.onclick = () => { if (confirm('Clear all saved data and start fresh?')) clearStorage(); };
-  actions.prepend(btn);
+  btn.onclick = clearStorage;
+  actions.appendChild(btn);
+
+  // Show signed-in email in sidebar footer
+  const email = localStorage.getItem(EMAIL_KEY);
+  const sfVal = document.querySelector('.sf-val');
+  if (sfVal && email) sfVal.textContent = email;
 }
 
 // ══════════════════════════════════════════════
@@ -4977,10 +5406,946 @@ if (isMobileView()) {
   });
 }
 
-// ── Boot ──
-window.addEventListener('DOMContentLoaded', () => {
-  initGoogleAuth();
+// ── Price edit modal ──
+let _peCurrentSku = null;
+
+function openPriceEdit(sku) {
+  const pricing = getPricingData();
+  const entry   = pricing[sku];
+  if (!entry) return;
+  _peCurrentSku = sku;
+  document.getElementById('pe-sku-label').textContent = sku + (entry.title ? ' · ' + entry.title : '');
+  document.getElementById('pe-price').value = entry.price || '';
+  document.getElementById('pe-date').value  = new Date().toISOString().substring(0,10);
+  const modal = document.getElementById('price-edit-modal');
+  modal.style.display = 'flex';
+}
+
+function closePriceEdit() {
+  document.getElementById('price-edit-modal').style.display = 'none';
+  _peCurrentSku = null;
+}
+
+function savePriceEdit() {
+  const sku      = _peCurrentSku;
+  const newPrice = parseFloat(document.getElementById('pe-price').value);
+  const effDate  = document.getElementById('pe-date').value;
+  if (!sku || isNaN(newPrice) || newPrice <= 0 || !effDate) {
+    alert('Please enter a valid price and effective date.');
+    return;
+  }
+
+  const pricing = getPricingData();
+  const history = getPricingHistory();
+
+  if (!pricing[sku]) { alert('SKU not found.'); return; }
+
+  // Close current open history entry
+  const hist = history[sku] || [];
+  if (hist.length > 0 && hist[hist.length-1].effective_to === null) {
+    hist[hist.length-1].effective_to = effDate;
+  }
+  // Add new entry
+  hist.push({ price: newPrice, effective_from: effDate, effective_to: null, label: 'Edited' });
+  history[sku] = hist;
+
+  // Update current price
+  pricing[sku] = { ...pricing[sku], price: newPrice, updated_at: effDate };
+
+  savePricingData(pricing);
+  savePricingHistory(history);
+
+  closePriceEdit();
+  renderPricingTable();
+
+  // Show confirmation
+  const badge = document.getElementById('pricing-file-status');
+  if (badge) { badge.textContent = `✓ Price updated for ${sku} → ${fFull(newPrice)} from ${fDate(effDate)}`; badge.style.color = 'var(--success)'; }
+}
+
+// Close modal on backdrop click
+document.getElementById('price-edit-modal')?.addEventListener('click', e => {
+  if (e.target.id === 'price-edit-modal') closePriceEdit();
 });
+
+// ── Custom datepicker ──
+const _dp = { open: null, year: 0, month: 0 };
+const DP_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DP_DAYS   = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+function dpOpen(wrapId) {
+  // Close any open calendar
+  if (_dp.open && _dp.open !== wrapId) dpClose();
+  _dp.open = wrapId;
+  const wrap  = document.getElementById(wrapId);
+  const input = wrap.querySelector('.datepicker-input');
+  const val   = input.value; // YYYY-MM-DD
+  const today = new Date();
+  let cal = wrap.querySelector('.dp-cal');
+  if (!cal) {
+    cal = document.createElement('div');
+    cal.className = 'dp-cal';
+    wrap.appendChild(cal);
+  }
+  // Parse existing value
+  if (val && /^\d{4}-\d{2}-\d{2}$/.test(val)) {
+    const d = new Date(val + 'T00:00:00');
+    _dp.year  = d.getFullYear();
+    _dp.month = d.getMonth();
+  } else {
+    _dp.year  = today.getFullYear();
+    _dp.month = today.getMonth();
+  }
+  dpRender(wrapId);
+  cal.classList.add('open');
+  // Use mousedown so nav button clicks (which re-render DOM) don't race with this handler
+  setTimeout(() => {
+    const handler = e => {
+      if (!wrap.contains(e.target)) {
+        dpClose();
+        document.removeEventListener('mousedown', handler);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    wrap._dpHandler = handler;
+  }, 0);
+}
+
+function dpClose() {
+  if (!_dp.open) return;
+  const wrap = document.getElementById(_dp.open);
+  if (wrap) {
+    const cal = wrap.querySelector('.dp-cal');
+    if (cal) cal.classList.remove('open');
+    if (wrap._dpHandler) {
+      document.removeEventListener('mousedown', wrap._dpHandler);
+      wrap._dpHandler = null;
+    }
+  }
+  _dp.open = null;
+}
+
+function dpRender(wrapId) {
+  const wrap  = document.getElementById(wrapId);
+  const input = wrap.querySelector('.datepicker-input');
+  const cal   = wrap.querySelector('.dp-cal');
+  const today = new Date(); today.setHours(0,0,0,0);
+  const selVal = input.value;
+  const selDate = selVal ? new Date(selVal + 'T00:00:00') : null;
+
+  // Get range partner
+  const isStart = wrapId === 'de-start-wrap';
+  const isEnd   = wrapId === 'de-end-wrap';
+  const startVal = document.getElementById('de-start')?.value;
+  const endVal   = document.getElementById('de-end')?.value;
+  const rangeStart = startVal ? new Date(startVal + 'T00:00:00') : null;
+  const rangeEnd   = endVal   ? new Date(endVal   + 'T00:00:00') : null;
+
+  const firstDay = new Date(_dp.year, _dp.month, 1);
+  const lastDay  = new Date(_dp.year, _dp.month + 1, 0);
+  const startDow = firstDay.getDay();
+
+  let html = `
+    <div class="dp-header">
+      <button class="dp-nav" onclick="dpNav('${wrapId}',-1)">‹</button>
+      <span class="dp-month-label">${DP_MONTHS[_dp.month]} ${_dp.year}</span>
+      <button class="dp-nav" onclick="dpNav('${wrapId}',1)">›</button>
+    </div>
+    <div class="dp-grid">
+      ${DP_DAYS.map(d=>`<div class="dp-dow">${d}</div>`).join('')}`;
+
+  // Leading blanks
+  for (let i = 0; i < startDow; i++) {
+    const d = new Date(_dp.year, _dp.month, -(startDow - i - 1));
+    html += `<div class="dp-day other-month">${d.getDate()}</div>`;
+  }
+
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    const date = new Date(_dp.year, _dp.month, d);
+    let cls = 'dp-day';
+    if (date.getTime() === today.getTime()) cls += ' today';
+    if (selDate && date.getTime() === selDate.getTime()) cls += ' selected';
+    if (rangeStart && rangeEnd && date > rangeStart && date < rangeEnd) cls += ' in-range';
+    if (isEnd && rangeEnd && date.getTime() === rangeEnd.getTime() && !isStart) cls += ' range-end';
+    if (isStart && rangeStart && date.getTime() === rangeStart.getTime()) cls += ' selected';
+    const iso = `${_dp.year}-${String(_dp.month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    html += `<div class="${cls}" onclick="dpSelect('${wrapId}','${iso}')">${d}</div>`;
+  }
+
+  // Trailing blanks
+  const trailing = 7 - ((startDow + lastDay.getDate()) % 7);
+  if (trailing < 7) for (let i = 1; i <= trailing; i++) html += `<div class="dp-day other-month">${i}</div>`;
+
+  html += `</div>
+    <div class="dp-footer">
+      <button onclick="dpClear('${wrapId}')">Clear</button>
+      <button class="dp-today-btn" onclick="dpSelectToday('${wrapId}')">Today</button>
+    </div>`;
+  cal.innerHTML = html;
+}
+
+function dpNav(wrapId, dir) {
+  _dp.month += dir;
+  if (_dp.month > 11) { _dp.month = 0; _dp.year++; }
+  if (_dp.month < 0)  { _dp.month = 11; _dp.year--; }
+  dpRender(wrapId);
+}
+
+function dpSelect(wrapId, iso) {
+  const input = document.getElementById(wrapId).querySelector('.datepicker-input');
+  const [y, m, d] = iso.split('-');
+  const MN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  input.value = iso; // store YYYY-MM-DD internally for saveDiscountEvent
+  input.dataset.display = `${parseInt(d)} ${MN[parseInt(m)-1]} ${y}`;
+  input.placeholder = `${parseInt(d)} ${MN[parseInt(m)-1]} ${y}`;
+  // Show formatted display
+  input.value = iso;
+  // Update display text via placeholder trick — set value as formatted
+  const formatted = `${parseInt(d)} ${MN[parseInt(m)-1]} ${y}`;
+  input.setAttribute('data-iso', iso);
+  input.value = formatted;
+  dpClose();
+  // Re-render partner to update range shading
+  const partner = wrapId === 'de-start-wrap' ? 'de-end-wrap' : 'de-start-wrap';
+  const pCal = document.getElementById(partner)?.querySelector('.dp-cal');
+  if (pCal?.classList.contains('open')) dpRender(partner);
+}
+
+function dpClear(wrapId) {
+  const input = document.getElementById(wrapId).querySelector('.datepicker-input');
+  input.value = '';
+  input.removeAttribute('data-iso');
+  dpClose();
+}
+
+function dpSelectToday(wrapId) {
+  const t = new Date();
+  const iso = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+  dpSelect(wrapId, iso);
+}
+
+// Override getDeDate so saveDiscountEvent reads data-iso correctly
+function getDeDate(inputId) {
+  const el = document.getElementById(inputId);
+  return el?.getAttribute('data-iso') || el?.value || '';
+}
+
+// ── Order detail overlay ──
+function odOpen(oid) {
+  document.getElementById('od-order-id').textContent = oid;
+  document.getElementById('od-body').innerHTML = buildOrderDetail(oid);
+  document.getElementById('od-overlay').classList.add('open');
+  document.getElementById('usearch-input').value = '';
+  uSearchClose();
+}
+
+function odClose() {
+  document.getElementById('od-overlay').classList.remove('open');
+}
+
+function buildOrderDetail(oid) {
+  const dispatch   = DB.ordersIndex[oid];
+  const ships      = DB.shipments[oid] || [];
+  const rawRows    = (DB.ordersRaw || []).filter(r => r.orderNo === oid);
+  const azItems    = getAmazonItemsForOrder(oid);
+  const fkItem     = getFkItemForOrder(oid);
+  const reconRow   = (DB.reconOutput || []).find(r => r.order_no === oid);
+  const accFlags   = (DB.accuracyFlags || []).filter(f => f.order_no === oid);
+  const refundFlag = (DB.refundFlags || []).find(f => f.order_no === oid);
+
+  const platform   = dispatch?.platform || reconRow?.platform || (azItems.length ? 'Amazon' : fkItem ? 'Flipkart' : 'Unknown');
+  const dispDate   = dispatch?.firstDate || reconRow?.dispatch_date || '—';
+  const orderDate  = reconRow?.order_date || '—';
+  const status     = reconRow?.status || '—';
+  const statusColor = {Paid:'success',Delayed:'danger',Refunded:'warn',Partial:'warn',Replacement:''}[status] || '';
+  const skus       = [...new Set([...rawRows.map(r=>r.sku), ...(reconRow?.skus||[]), ...azItems.map(i=>i.sku), ...(fkItem?[fkItem.sku]:[])].filter(Boolean))];
+  const masterSkus = [...new Set(rawRows.map(r=>r.masterSku).filter(Boolean))];
+  const settled    = reconRow?.settled_amount;
+  const allDates   = dispatch?.allDates || [];
+  const isDupDispatch = dispatch?.hasDuplicateDispatch || allDates.length > 1;
+
+  let html = '';
+
+  // ── Duplicate dispatch warning ──
+  if (isDupDispatch) {
+    html += `<div style="padding:10px 12px;background:rgba(240,168,50,.1);border:1px solid rgba(240,168,50,.25);border-radius:var(--r-sm);margin-bottom:16px;display:flex;gap:10px;align-items:flex-start">
+      <span style="font-size:14px;flex-shrink:0">⚠</span>
+      <div>
+        <div style="font-size:12px;color:var(--warn);font-weight:600;margin-bottom:4px">Duplicate dispatch detected</div>
+        <div style="font-size:11px;color:var(--text2)">This order appears on ${allDates.length} different dispatch dates:</div>
+        <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px">
+          ${allDates.map((d,i) => `<span style="font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:4px;background:${i===0?'rgba(240,168,50,.2)':'var(--bg4)'};color:${i===0?'var(--warn)':'var(--text3)'}">${fDate(d)}${i===0?' (first)':''}</span>`).join('')}
+        </div>
+        <div style="font-size:10px;color:var(--text3);margin-top:6px">Verify with warehouse — may indicate a re-dispatch or data entry error</div>
+      </div>
+    </div>`;
+  }
+
+  // ── Identity section ──
+  html += `<div class="od-section">
+    <div class="od-section-title">Identity</div>
+    <div class="od-grid2" style="margin-bottom:12px">
+      <div class="od-field"><span class="od-field-label">Platform</span><span class="od-field-val">${platPill(platform)}</span></div>
+      <div class="od-field"><span class="od-field-label">Status</span><span class="od-field-val">${statusPill(status)}</span></div>
+    </div>
+    <div class="od-grid2">
+      <div class="od-field"><span class="od-field-label">Order date</span><span class="od-field-val">${orderDate !== '—' ? fDate(orderDate) : '—'}</span></div>
+      <div class="od-field"><span class="od-field-label">Dispatch date${isDupDispatch?` (${allDates.length}×)`:''}</span>
+        <span class="od-field-val${isDupDispatch?' warn':''}">
+          ${isDupDispatch ? allDates.map(d=>fDate(d)).join(', ') : (dispDate !== '—' ? fDate(dispDate) : '—')}
+        </span>
+      </div>
+      ${dispatch?.days_since_dispatch != null ? `<div class="od-field"><span class="od-field-label">Days since dispatch</span><span class="od-field-val ${dispatch.days_since_dispatch>=14?'danger':dispatch.days_since_dispatch>=7?'warn':''}">${dispatch.days_since_dispatch} days</span></div>` : ''}
+      ${settled != null ? `<div class="od-field"><span class="od-field-label">Net settled</span><span class="od-field-val ${statusColor} primary">${fFull(settled)}</span></div>` : ''}
+    </div>
+  </div>`;
+
+  // ── SKUs & Products ──
+  if (skus.length) {
+    html += `<div class="od-section">
+      <div class="od-section-title">SKUs</div>
+      ${skus.map(sku => {
+        const ms = masterSkus[0] || '';
+        const pricing = getPricingData();
+        const resolved = resolveToAmazonSku(sku) || sku;
+        const pEntry = pricing[resolved];
+        return `<div style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-family:var(--mono);font-size:11px;color:var(--text)">${sku}</div>
+            ${pEntry?.title ? `<div style="font-size:10px;color:var(--text3);margin-top:2px">${pEntry.title}</div>` : ''}
+            ${pEntry?.master_sku ? `<div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:1px">Master: ${pEntry.master_sku}</div>` : ''}
+            ${pEntry?.asin ? `<div style="font-family:var(--mono);font-size:9px;color:var(--text3)">ASIN: ${pEntry.asin}</div>` : ''}
+            ${pEntry?.fk_sku && pEntry.fk_sku !== sku ? `<div style="font-family:var(--mono);font-size:9px;color:var(--text3)">FK SKU: ${pEntry.fk_sku}</div>` : ''}
+          </div>
+          ${pEntry?.price ? `<div style="font-family:var(--mono);font-size:13px;font-weight:600;color:var(--accent)">${fFull(pEntry.price)}</div>` : ''}
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  // ── Shipments / AWBs ──
+  if (ships.length) {
+    html += `<div class="od-section">
+      <div class="od-section-title">Shipments — ${ships.length} AWB${ships.length>1?'s':''}</div>
+      ${ships.map(s => `
+        <div class="od-awb-row">
+          <span style="font-family:var(--mono);font-size:11px;color:var(--text);flex:1">${s.awb || '—'}</span>
+          <span style="font-size:11px;color:var(--text3);min-width:100px">${s.courier || '—'}</span>
+          <span style="font-size:11px;color:var(--text3)">${s.date ? fDate(s.date) : '—'}</span>
+        </div>`).join('')}
+    </div>`;
+  }
+
+  // ── Settlement info ──
+  const settlementId = azItems[0]?.settlement_id || fkItem?.neft_ids_str || '—';
+  const depositDate  = azItems[0]?.deposit_date  || fkItem?.last_date || '—';
+  if (settlementId !== '—' || fkItem) {
+    html += `<div class="od-section">
+      <div class="od-section-title">Settlement</div>
+      <div class="od-grid2">
+        <div class="od-field"><span class="od-field-label">${platform==='Flipkart'?'NEFT ID(s)':'Settlement ID'}</span>
+          <span class="od-field-val" style="font-size:10px">${platform==='Flipkart'?(fkItem?.neft_ids_str||'—').split(', ').join('<br>'):settlementId}</span></div>
+        <div class="od-field"><span class="od-field-label">Payment date</span><span class="od-field-val">${depositDate !== '—' ? fDate(String(depositDate).substring(0,10)) : '—'}</span></div>
+        ${fkItem?.neft_count > 1 ? `<div class="od-field"><span class="od-field-label">NEFT batches</span><span class="od-field-val warn">${fkItem.neft_count} NEFTs</span></div>` : ''}
+        ${fkItem?.event_count ? `<div class="od-field"><span class="od-field-label">Settlement events</span><span class="od-field-val">${fkItem.event_count}</span></div>` : ''}
+      </div>
+    </div>`;
+  }
+
+  // ── Transaction breakdown ──
+  const buildTxnSection = (items, isFk) => {
+    if (!items.length && !isFk) return '';
+    const rc = getRateCard();
+    let rows = [];
+
+    if (!isFk && items.length) {
+      items.forEach(item => {
+        const expRate = getExpectedRate(item.sku, item.invoice / (item.qty||1));
+        const expRef  = -(item.principal * expRate);
+        const expRefGst = expRef * 0.18;
+        const expClose  = -(getExpectedClosingFee(item.sku));
+        const expCloseGst = expClose * 0.18;
+        const expTcs  = -(item.principal * rc.tcs_rate / 100);
+        const expTds  = -(item.principal * rc.tds_rate / 100);
+        const expNet  = item.principal + expRef + expRefGst + expClose + expCloseGst + expTcs + expTds;
+        const actNet  = item.net_after_refund;
+        rows = [
+          ['Invoice', item.invoice, null, null],
+          ['Principal', item.principal, item.principal, 0],
+          [`Referral fee (exp ${fPct(expRate)} / act ${fPct(item.commission_rate)})`, item.referral, expRef, item.referral - expRef],
+          ['Referral GST', item.referral_gst, expRefGst, item.referral_gst - expRefGst],
+          ['Closing fee', item.closing, expClose, item.closing - expClose],
+          ['Closing GST', item.closing_gst, expCloseGst, item.closing_gst - expCloseGst],
+          ['TCS', item.tcs, expTcs, item.tcs - expTcs],
+          ['TDS', item.tds, expTds, item.tds - expTds],
+          ...(item.shipping_revenue ? [['Shipping revenue ⚠', item.shipping_revenue, null, null]] : []),
+          ...(item.shipping_commission ? [['Shipping commission ⚠', item.shipping_commission, null, null]] : []),
+          ['Net settlement', actNet, expNet, actNet - expNet],
+        ];
+      });
+    } else if (isFk && fkItem) {
+      const sale = (fkItem.sale_amount||0) + (fkItem.total_offer||0);
+      rows = [
+        ['Sale amount', sale, null, null],
+        ...(fkItem.total_offer ? [['  Platform offer top-up', fkItem.total_offer, null, null]] : []),
+        [`Commission (${fkItem.commission_rate?.toFixed(1)||18}%)`, fkItem.commission||0, null, null],
+        ['GST on MP fees', fkItem.gst_on_fees||0, null, null],
+        ['Fixed fee', fkItem.fixed_fee||0, null, null],
+        ...(fkItem.collection_fee ? [['Collection fee ⚠', fkItem.collection_fee, null, null]] : []),
+        ['TCS', fkItem.tcs||0, null, null],
+        ['TDS', fkItem.tds||0, null, null],
+        ...(fkItem.offer_adj ? [['Offer adjustment', fkItem.offer_adj, null, null]] : []),
+        ...(fkItem.refund ? [['Refund', fkItem.refund, null, null]] : []),
+        ['Net settlement', fkItem.bank_total||0, null, null],
+      ];
+    }
+
+    if (!rows.length) return '';
+
+    return `<div class="od-section">
+      <div class="od-section-title">Transaction breakdown</div>
+      <div style="display:grid;grid-template-columns:1fr auto auto auto;gap:4px 12px;margin-bottom:4px;padding-bottom:4px;border-bottom:1px solid var(--border)">
+        <span style="font-family:var(--mono);font-size:9px;color:var(--text3)">Line item</span>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--text3);text-align:right">Actual</span>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--text3);text-align:right">Expected</span>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--text3);text-align:right">Diff</span>
+      </div>
+      ${rows.map(([label, actual, expected, diff]) => {
+        const isNet = label === 'Net settlement';
+        const dc = diff == null ? 'od-txn-ok' : Math.abs(diff) < 1 ? 'od-txn-ok' : diff < 0 ? 'od-txn-neg' : 'od-txn-pos';
+        const diffStr = diff == null ? '—' : Math.abs(diff) < 1 ? '—' : (diff > 0 ? '+' : '') + fFull(diff);
+        return `<div class="od-txn-row${isNet?' od-txn-total':''}">
+          <span class="od-txn-label" style="${label.includes('⚠')?'color:var(--warn)':''}">${label}</span>
+          <span class="od-txn-actual">${fFull(actual)}</span>
+          <span class="od-txn-expected">${expected != null ? fFull(expected) : '—'}</span>
+          <span class="od-txn-diff ${dc}">${diffStr}</span>
+        </div>`;
+      }).join('')}
+    </div>`;
+  };
+
+  html += buildTxnSection(azItems, false);
+  html += buildTxnSection([], fkItem != null);
+
+  // ── Flags ──
+  const allFlags = [...accFlags, ...(refundFlag ? [refundFlag] : [])];
+  if (allFlags.length) {
+    html += `<div class="od-section">
+      <div class="od-section-title">Flags</div>
+      ${accFlags.map(f => `
+        <div class="od-flag ${f.diff < 0 ? 'danger' : 'warn'}">
+          <strong>${f.issue_type}</strong> · Invoice ${fFull(f.invoice)} · Expected ${fFull(f.expected)} · Received ${fFull(f.actual)} · Diff ${fFull(f.diff)}
+          ${(f.extra_flags||[]).map(ef => `<div style="margin-top:4px;font-size:10px;opacity:.85">${ef}</div>`).join('')}
+        </div>`).join('')}
+      ${refundFlag ? `<div class="od-flag ${refundFlag.refund_status==='Over Refunded'?'danger':'warn'}">
+        <strong>${refundFlag.refund_status}</strong> · Order value ${fFull(refundFlag.order_value)} · Refund received ${fFull(refundFlag.refund_amount)} · Diff ${fFull(refundFlag.diff)}
+      </div>` : ''}
+    </div>`;
+  }
+
+  if (!html.includes('od-section')) {
+    html = `<div style="padding:40px 0;text-align:center;color:var(--text3)">No detailed data found for this order. Run reconciliation to load full data.</div>`;
+  }
+
+  return html;
+}
+
+// ── Universal order search ──
+let _usTimer = null;
+
+function uSearchInput(q) {
+  clearTimeout(_usTimer);
+  q = q.trim();
+  if (!q || q.length < 3) { uSearchClose(); return; }
+  _usTimer = setTimeout(() => uSearchRun(q), 200);
+}
+
+function uSearchClose() {
+  document.getElementById('usearch-results').style.display = 'none';
+  document.getElementById('usearch-results').innerHTML = '';
+}
+
+function uSearchRun(q) {
+  const ql = q.toLowerCase();
+  const results = [];
+
+  // Search across all data sources
+  const orderNos = new Set();
+
+  // 1. Dispatch / ordersIndex
+  Object.keys(DB.ordersIndex || {}).forEach(oid => {
+    if (oid.toLowerCase().includes(ql)) orderNos.add(oid);
+  });
+
+  // 2. AWB in shipments
+  Object.entries(DB.shipments || {}).forEach(([oid, ships]) => {
+    if (ships.some(s => s.awb && s.awb.toLowerCase().includes(ql))) orderNos.add(oid);
+  });
+
+  // 3. SKU in ordersRaw
+  (DB.ordersRaw || []).forEach(r => {
+    if ((r.sku||'').toLowerCase().includes(ql) || (r.masterSku||'').toLowerCase().includes(ql)) {
+      if (r.orderNo) orderNos.add(r.orderNo);
+    }
+  });
+
+  // 4. Amazon settlement items
+  (DB.amazonItems || []).forEach(i => {
+    if ((i['order-id']||'').toLowerCase().includes(ql)) orderNos.add(i['order-id']);
+  });
+
+  // 5. Flipkart ledger
+  (DB.flipkartLedger || []).forEach(l => {
+    const oid = l.order_id || String(l.order_item_id);
+    if (oid.toLowerCase().includes(ql) || (l.sku||'').toLowerCase().includes(ql)) orderNos.add(oid);
+  });
+
+  const el = document.getElementById('usearch-results');
+  if (!orderNos.size) {
+    el.innerHTML = `<div class="us-empty">No orders found for "${q}"</div>`;
+    el.style.display = 'block';
+    return;
+  }
+
+  const orderList = [...orderNos].slice(0, 8);
+  let html = `<div class="us-section">${orderList.length} result${orderList.length!==1?'s':''} for "${q}"</div>`;
+
+  orderList.forEach(oid => {
+    html += buildOrderCard(oid);
+  });
+
+  el.innerHTML = html;
+  el.style.display = 'block';
+
+  // Close on outside click
+  setTimeout(() => {
+    const handler = e => {
+      if (!document.getElementById('usearch-wrap').contains(e.target)) {
+        uSearchClose();
+        document.removeEventListener('click', handler);
+      }
+    };
+    document.addEventListener('click', handler);
+  }, 0);
+}
+
+function buildOrderCard(oid) {
+  // Gather data from all sources
+  const dispatch   = DB.ordersIndex[oid];
+  const ships      = DB.shipments[oid] || [];
+  const rawRows    = (DB.ordersRaw || []).filter(r => r.orderNo === oid);
+  const azItems    = getAmazonItemsForOrder(oid);
+  const fkItem     = getFkItemForOrder(oid);
+  const reconRow   = (DB.reconOutput || []).find(r => r.order_no === oid);
+  const accFlag    = (DB.accuracyFlags || []).find(f => f.order_no === oid);
+  const refundFlag = (DB.refundFlags || []).find(f => f.order_no === oid);
+
+  const platform = dispatch?.platform || reconRow?.platform || (azItems.length ? 'Amazon' : fkItem ? 'Flipkart' : '—');
+  const dispDate = dispatch?.firstDate || reconRow?.dispatch_date || '—';
+  const orderDate = reconRow?.order_date || '—';
+  const skus = dispatch ? [...new Set(rawRows.map(r=>r.sku).filter(Boolean))] :
+               reconRow ? reconRow.skus :
+               azItems.length ? [...new Set(azItems.map(i=>i.sku))] :
+               fkItem ? [fkItem.sku] : [];
+  const status = reconRow?.status || '—';
+  const statusColor = status==='Paid'?'success':status==='Delayed'?'danger':status==='Refunded'?'warn':'';
+  const settled = reconRow?.settled_amount;
+
+  // AWBs
+  const awbs = ships.map(s => s.awb).filter(Boolean);
+
+  // Transaction figures — prefer breakdown data
+  let invoice='—', expected='—', actual='—', diff='—', diffColor='';
+  if (accFlag) {
+    invoice  = fFull(accFlag.invoice);
+    expected = fFull(accFlag.expected);
+    actual   = fFull(accFlag.actual);
+    const d  = accFlag.diff || 0;
+    diff     = (d > 0 ? '+' : '') + fFull(d);
+    diffColor = d < -10 ? 'danger' : d > 10 ? 'warn' : 'success';
+  } else if (azItems.length) {
+    const inv = azItems.reduce((s,i)=>s+i.invoice,0);
+    const net = azItems.reduce((s,i)=>s+i.net_after_refund,0);
+    invoice   = fFull(inv);
+    actual    = fFull(net);
+  } else if (fkItem) {
+    invoice   = fFull(fkItem.sale_amount + (fkItem.total_offer||0));
+    actual    = fFull(fkItem.bank_total || 0);
+  }
+
+  // NEFT / Settlement IDs
+  let settlementInfo = '—';
+  if (fkItem?.neft_ids_str) settlementInfo = fkItem.neft_ids_str;
+  else if (azItems.length && azItems[0].settlement_id) settlementInfo = azItems[0].settlement_id;
+  else if (reconRow?.settlement_id) settlementInfo = reconRow.settlement_id;
+
+  return `<div class="us-order-card" onclick="odOpen('${oid.replace(/'/g,"\\'")}');uSearchClose()">
+    <div class="us-order-header">
+      <span class="us-order-id">${oid}</span>
+      ${platPill(platform)}
+      ${statusPill(status)}
+    </div>
+    <div class="us-grid">
+      <div class="us-row"><span class="us-label">Order date</span><span class="us-val">${orderDate !== '—' ? fDate(orderDate) : '—'}</span></div>
+      <div class="us-row"><span class="us-label">Dispatch date</span><span class="us-val">${dispDate !== '—' ? fDate(dispDate) : '—'}</span></div>
+      <div class="us-row"><span class="us-label">SKU(s)</span><span class="us-val">${skus.slice(0,2).join(', ')||'—'}${skus.length>2?` +${skus.length-2}`:''}</span></div>
+      <div class="us-row"><span class="us-label">AWB(s)</span><span class="us-val">${awbs.slice(0,2).join(', ')||'—'}${awbs.length>2?` +${awbs.length-2}`:''}</span></div>
+      <div class="us-row"><span class="us-label">Settlement / NEFT</span><span class="us-val" style="font-size:9px">${settlementInfo}</span></div>
+      <div class="us-row"><span class="us-label">Net settled</span><span class="us-val ${statusColor}">${settled != null ? fFull(settled) : actual}</span></div>
+    </div>
+    ${invoice !== '—' ? `
+    <div class="us-txn">
+      <div class="us-txn-title">Transaction</div>
+      <div class="us-txn-grid">
+        <div class="us-row"><span class="us-label">Invoice</span><span class="us-val">${invoice}</span></div>
+        <div class="us-row"><span class="us-label">Expected net</span><span class="us-val">${expected}</span></div>
+        <div class="us-row"><span class="us-label">Received</span><span class="us-val">${actual}</span></div>
+        <div class="us-row"><span class="us-label">Diff</span><span class="us-val ${diffColor}">${diff}</span></div>
+      </div>
+      ${accFlag ? `<div style="font-size:10px;color:var(--warn);margin-top:6px">⚠ ${accFlag.issue_type}${accFlag.extra_flags?.length ? ' · ' + accFlag.extra_flags[0].substring(0,60) : ''}</div>` : ''}
+      ${refundFlag ? `<div style="font-size:10px;color:var(--danger);margin-top:4px">↩ Refund: ${refundFlag.refund_status}</div>` : ''}
+    </div>` : ''}
+    ${ships.length > 1 ? `<div style="margin-top:8px;font-size:10px;color:var(--text3)">${ships.length} shipments · ${awbs.join(', ')}</div>` : ''}
+  </div>`;
+}
+
+// ── Stale reconciliation banner ──
+let _reconStale = false;
+
+function markReconStale() {
+  if (!DB.reconDone) return; // nothing to stale if never run
+  _reconStale = true;
+  showStaleBanner();
+}
+
+function showStaleBanner() {
+  ['recon-stale-banner','accuracy-stale-banner'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'flex';
+  });
+}
+
+function clearStaleBanner() {
+  ['recon-stale-banner','accuracy-stale-banner'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+}
+
+function rerunFromBanner(btnEl) {
+  btnEl.innerHTML = '<span class="spin"></span>Running...';
+  btnEl.disabled = true;
+  // Navigate to recon page so user sees progress
+  nav('recon');
+  setTimeout(() => runRecon(btnEl), 100);
+}
+
+// ══════════════════════════════════════════════
+//  GOOGLE DRIVE INTEGRATION
+// ══════════════════════════════════════════════
+const CLIENT_ID   = '801481705797-4lr6orueunsbdk5vhhe578bga4ai6lhq.apps.googleusercontent.com';
+const FOLDER_ID   = '1oCWEmCOrDYfxtQqCE7Ui-O756_HhUCpF';
+const SCOPES      = 'https://www.googleapis.com/auth/drive.file';
+const TOKEN_KEY   = 'reconlens_gtoken';
+const EMAIL_KEY   = 'reconlens_gemail';
+
+// ── Allowed emails (whitelist) ──
+const ALLOWED_EMAILS = [
+  'adityaramnani@gmail.com',
+  // add more emails here before deploying
+];
+
+const DRIVE_FILES = {
+  db:               'reconlens_db.json',
+  ratecard:         'reconlens_ratecard.json',
+  pricing:          'reconlens_pricing.json',
+  pricing_history:  'reconlens_pricing_history.json',
+  discounts:        'reconlens_discounts.json',
+  discount_skus:    'reconlens_discount_skus.json',
+};
+
+let _driveToken = null;
+let _tokenClient = null;
+
+function showSync(msg) {
+  const el = document.getElementById('sync-indicator');
+  if (el) { el.textContent = msg; el.style.display = 'block'; }
+}
+function hideSync() {
+  const el = document.getElementById('sync-indicator');
+  if (el) el.style.display = 'none';
+}
+function syncError(msg) {
+  const el = document.getElementById('sync-indicator');
+  if (el) { el.textContent = '⚠ ' + msg; el.style.display = 'block'; setTimeout(hideSync, 4000); }
+}
+
+function initGoogleAuth() {
+  const saved = localStorage.getItem(TOKEN_KEY);
+  const email = localStorage.getItem(EMAIL_KEY);
+  if (saved && email) {
+    _driveToken = saved;
+    bootWithDrive(email);
+    return;
+  }
+  // Show login screen
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+function driveSignIn() {
+  document.getElementById('login-btn').disabled = true;
+  document.getElementById('login-btn').textContent = 'Signing in…';
+  if (!window.google) {
+    document.getElementById('login-error').textContent = 'Google Sign-In not loaded. Check connection.';
+    document.getElementById('login-error').style.display = 'block';
+    document.getElementById('login-btn').disabled = false;
+    document.getElementById('login-btn').textContent = 'Sign in with Google';
+    return;
+  }
+  _tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES + ' https://www.googleapis.com/auth/userinfo.email',
+    callback: async (resp) => {
+      if (resp.error) {
+        document.getElementById('login-error').textContent = 'Sign-in failed: ' + resp.error;
+        document.getElementById('login-error').style.display = 'block';
+        document.getElementById('login-btn').disabled = false;
+        document.getElementById('login-btn').textContent = 'Sign in with Google';
+        return;
+      }
+      _driveToken = resp.access_token;
+      // Get user email
+      try {
+        const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: 'Bearer ' + _driveToken }
+        });
+        const info = await r.json();
+        const email = info.email;
+        if (!ALLOWED_EMAILS.includes(email)) {
+          document.getElementById('login-error').textContent = `Access denied for ${email}. Contact admin.`;
+          document.getElementById('login-error').style.display = 'block';
+          document.getElementById('login-btn').disabled = false;
+          document.getElementById('login-btn').textContent = 'Sign in with Google';
+          _driveToken = null;
+          return;
+        }
+        localStorage.setItem(TOKEN_KEY, _driveToken);
+        localStorage.setItem(EMAIL_KEY, email);
+        bootWithDrive(email);
+      } catch(e) {
+        document.getElementById('login-error').textContent = 'Could not verify email: ' + e.message;
+        document.getElementById('login-error').style.display = 'block';
+        document.getElementById('login-btn').disabled = false;
+        document.getElementById('login-btn').textContent = 'Sign in with Google';
+      }
+    }
+  });
+  _tokenClient.requestAccessToken();
+}
+
+async function bootWithDrive(email) {
+  document.getElementById('login-screen').style.display = 'none';
+  document.querySelector('.main').style.display = 'flex';
+  // Show user email in sidebar
+  const sfVal = document.querySelector('.sf-val');
+  if (sfVal) sfVal.textContent = email;
+  // Load all Drive data
+  showSync('Loading from Drive…');
+  try {
+    await driveLoadAll();
+    hideSync();
+    if (DB.ordersLoaded || DB.reconDone) {
+      restoreUI();
+      addClearButton();
+    }
+  } catch(e) {
+    console.warn('Drive load failed, using localStorage:', e);
+    hideSync();
+    const restored = loadDB();
+    if (restored && (DB.ordersLoaded || DB.reconDone)) {
+      restoreUI();
+      addClearButton();
+    }
+  }
+  initPricingDiscounts();
+}
+
+// ── Drive file registry (fileId cache) ──
+const _driveRegistry = {};
+
+async function driveGetFileId(filename) {
+  if (_driveRegistry[filename]) return _driveRegistry[filename];
+  const q = encodeURIComponent(`name='${filename}' and '${FOLDER_ID}' in parents and trashed=false`);
+  const r = await fetch(
+    `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&includeItemsFromAllDrives=true&supportsAllDrives=true`,
+    { headers: { Authorization: 'Bearer ' + _driveToken } }
+  );
+  const data = await r.json();
+  if (data.files && data.files.length) {
+    _driveRegistry[filename] = data.files[0].id;
+    return data.files[0].id;
+  }
+  return null;
+}
+
+async function driveRead(filename) {
+  const fileId = await driveGetFileId(filename);
+  if (!fileId) return null;
+  const r = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&supportsAllDrives=true`,
+    { headers: { Authorization: 'Bearer ' + _driveToken } }
+  );
+  if (!r.ok) return null;
+  return await r.json();
+}
+
+async function driveWrite(filename, data) {
+  const json = JSON.stringify(data);
+  const blob = new Blob([json], { type: 'application/json' });
+  let fileId = await driveGetFileId(filename);
+  if (fileId) {
+    // Update existing
+    await fetch(
+      `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media&supportsAllDrives=true`,
+      { method: 'PATCH', headers: { Authorization: 'Bearer ' + _driveToken, 'Content-Type': 'application/json' }, body: json }
+    );
+  } else {
+    // Create new
+    const meta = JSON.stringify({ name: filename, parents: [FOLDER_ID] });
+    const form = new FormData();
+    form.append('metadata', new Blob([meta], { type: 'application/json' }));
+    form.append('file', blob);
+    const r = await fetch(
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true',
+      { method: 'POST', headers: { Authorization: 'Bearer ' + _driveToken }, body: form }
+    );
+    const created = await r.json();
+    if (created.id) _driveRegistry[filename] = created.id;
+  }
+}
+
+async function driveLoadAll() {
+  // Load main DB
+  const db = await driveRead(DRIVE_FILES.db);
+  if (db && Object.keys(db).length) {
+    DB.ordersRaw         = db.ordersRaw         || [];
+    DB.shipments         = db.shipments          || {};
+    DB.ordersIndex       = db.ordersIndex        || {};
+    DB.amazonItems       = db.amazonItems        || [];
+    DB.amazonSettlements = db.amazonSettlements  || [];
+    DB.flipkartLedger    = db.flipkartLedger     || [];
+    DB.flipkartNeft      = db.flipkartNeft       || [];
+    DB.d2cRaw            = db.d2cRaw             || [];
+    DB.reconOutput       = db.reconOutput        || [];
+    DB.flags             = db.flags              || [];
+    DB.accuracyFlags     = db.accuracyFlags      || [];
+    DB.refundFlags       = db.refundFlags        || [];
+    DB.ordersLoaded      = db.ordersLoaded       || false;
+    DB.amazonLoaded      = db.amazonLoaded       || false;
+    DB.flipkartLoaded    = db.flipkartLoaded     || false;
+    DB.d2cLoaded         = db.d2cLoaded          || false;
+    DB.reconDone         = db.reconDone          || false;
+    // Also save to localStorage as cache
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); } catch(e) {}
+  } else {
+    // Fall back to localStorage cache
+    loadDB();
+  }
+  // Load settings files
+  const rc = await driveRead(DRIVE_FILES.ratecard);
+  if (rc) { try { localStorage.setItem(RC_KEY, JSON.stringify(rc)); } catch(e) {} }
+  const pr = await driveRead(DRIVE_FILES.pricing);
+  if (pr) { try { localStorage.setItem(PRICING_KEY, JSON.stringify(pr)); } catch(e) {} }
+  const ph = await driveRead(DRIVE_FILES.pricing_history);
+  if (ph) { try { localStorage.setItem(PRICING_HIST_KEY, JSON.stringify(ph)); } catch(e) {} }
+  const dc = await driveRead(DRIVE_FILES.discounts);
+  if (dc) { try { localStorage.setItem(DISCOUNT_KEY, JSON.stringify(dc)); } catch(e) {} }
+  const ds = await driveRead(DRIVE_FILES.discount_skus);
+  if (ds) { try { localStorage.setItem(DISCOUNT_SKU_KEY, JSON.stringify(ds)); } catch(e) {} }
+}
+
+async function driveSaveDB() {
+  if (!_driveToken) return;
+  showSync('Saving…');
+  try {
+    const payload = {
+      ordersRaw: DB.ordersRaw, shipments: DB.shipments, ordersIndex: DB.ordersIndex,
+      amazonItems: DB.amazonItems, amazonSettlements: DB.amazonSettlements,
+      flipkartLedger: DB.flipkartLedger, flipkartNeft: DB.flipkartNeft, d2cRaw: DB.d2cRaw,
+      reconOutput: DB.reconOutput, flags: DB.flags,
+      accuracyFlags: DB.accuracyFlags, refundFlags: DB.refundFlags,
+      ordersLoaded: DB.ordersLoaded, amazonLoaded: DB.amazonLoaded,
+      flipkartLoaded: DB.flipkartLoaded, d2cLoaded: DB.d2cLoaded, reconDone: DB.reconDone,
+    };
+    await driveWrite(DRIVE_FILES.db, payload);
+    hideSync();
+  } catch(e) { syncError('Save failed: ' + e.message); }
+}
+
+async function driveSaveRC(rc) {
+  if (!_driveToken) return;
+  await driveWrite(DRIVE_FILES.ratecard, rc).catch(e => console.warn('RC Drive save:', e));
+}
+
+async function driveSavePricing() {
+  if (!_driveToken) return;
+  const pr = (() => { try { const s = localStorage.getItem(PRICING_KEY); return s ? JSON.parse(s) : {}; } catch(e) { return {}; } })();
+  const ph = (() => { try { const s = localStorage.getItem(PRICING_HIST_KEY); return s ? JSON.parse(s) : {}; } catch(e) { return {}; } })();
+  await driveWrite(DRIVE_FILES.pricing, pr).catch(e => console.warn('Pricing Drive save:', e));
+  await driveWrite(DRIVE_FILES.pricing_history, ph).catch(e => console.warn('Pricing hist Drive save:', e));
+}
+
+async function driveSaveDiscounts() {
+  if (!_driveToken) return;
+  const dc = (() => { try { const s = localStorage.getItem(DISCOUNT_KEY); return s ? JSON.parse(s) : []; } catch(e) { return []; } })();
+  const ds = (() => { try { const s = localStorage.getItem(DISCOUNT_SKU_KEY); return s ? JSON.parse(s) : {}; } catch(e) { return {}; } })();
+  await driveWrite(DRIVE_FILES.discounts, dc).catch(e => console.warn('Discounts Drive save:', e));
+  await driveWrite(DRIVE_FILES.discount_skus, ds).catch(e => console.warn('Discount SKUs Drive save:', e));
+}
+
+function driveSignOut() {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(EMAIL_KEY);
+  _driveToken = null;
+  location.reload();
+}
+
+function refreshFromDrive() {
+  if (!_driveToken) { alert('Not signed in.'); return; }
+  showSync('Refreshing…');
+  driveLoadAll().then(() => {
+    hideSync();
+    if (DB.ordersLoaded || DB.reconDone) {
+      restoreUI();
+      renderReconPage();
+      renderMasterPage();
+    }
+    initPricingDiscounts();
+    alert('Data refreshed from Drive.');
+  }).catch(e => syncError('Refresh failed: ' + e.message));
+}
+
+// ── Boot ──
+(function init() {
+  // Restore theme immediately (before auth)
+  const savedTheme = localStorage.getItem('reconlens_theme');
+  if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+
+  // Add theme toggle always visible
+  const themeBtn = document.createElement('button');
+  themeBtn.className = 'btn btn-sm';
+  themeBtn.id = 'theme-toggle-btn';
+  themeBtn.title = 'Toggle light/dark mode';
+  themeBtn.style.cssText = 'font-size:14px;padding:4px 8px;line-height:1';
+  themeBtn.innerHTML = savedTheme === 'light' ? '☾' : '☀';
+  themeBtn.onclick = toggleTheme;
+  document.getElementById('topbar-actions').appendChild(themeBtn);
+
+  // Drive auth flow (shows login screen or boots with Drive)
+  window.addEventListener('load', () => {
+    initGoogleAuth();
+  });
+})();
 </script>
 </body>
 </html>
