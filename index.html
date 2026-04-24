@@ -1921,6 +1921,7 @@ async function loadPayment(platform, files) {
   }
 
   checkStep2Ready();
+  saveDB();
 }
 
 function checkStep2Ready() {
@@ -5194,8 +5195,13 @@ function saveDB() {
       ordersLoaded: DB.ordersLoaded, amazonLoaded: DB.amazonLoaded,
       flipkartLoaded: DB.flipkartLoaded, d2cLoaded: DB.d2cLoaded, reconDone: DB.reconDone,
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-    driveSaveDB(); // async, non-blocking
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    } catch(qe) {
+      // localStorage quota exceeded — Drive is the source of truth, that's fine
+      console.warn('ReconLens: localStorage full, relying on Drive sync');
+    }
+    driveSaveDB(); // async, non-blocking — Drive is primary persistence
   } catch(e) { console.warn('ReconLens: could not save —', e.message); }
 }
 
@@ -6079,31 +6085,59 @@ function syncError(msg) {
 
 function initGoogleAuth() {
   const email = localStorage.getItem(EMAIL_KEY);
-  if (email) {
-    // Try silent token refresh first
-    _silentEmail = email;
-    _trySignInSilent();
-    return;
+  _silentEmail = email || null;
+
+  // Wait for GSI to load, then attempt silent refresh or show login
+  if (window.google?.accounts) {
+    _doAuth();
+  } else {
+    // GSI loads async — wait for it
+    const gsiScript = document.querySelector('script[src*="accounts.google.com/gsi"]');
+    if (gsiScript) {
+      gsiScript.addEventListener('load', _doAuth);
+      gsiScript.addEventListener('error', () => {
+        // GSI failed to load (e.g. no network) — show login screen anyway
+        document.getElementById('login-screen').style.display = 'flex';
+        document.getElementById('login-error').textContent = 'Could not load Google Sign-In. Check your connection.';
+        document.getElementById('login-error').style.display = 'block';
+      });
+    } else {
+      setTimeout(_doAuth, 1500); // fallback
+    }
   }
-  document.getElementById('login-screen').style.display = 'flex';
+}
+
+function _doAuth() {
+  if (_silentEmail) {
+    _trySignInSilent();
+  } else {
+    document.getElementById('login-screen').style.display = 'flex';
+  }
 }
 
 let _silentEmail = null;
+let _silentTimer = null;
 
 function _trySignInSilent() {
   if (!window.google) {
-    // GSI not loaded yet — show login screen
     document.getElementById('login-screen').style.display = 'flex';
     return;
   }
+  // Fallback: if callback never fires within 4s, show login screen
+  _silentTimer = setTimeout(() => {
+    if (!_driveToken) {
+      document.getElementById('login-screen').style.display = 'flex';
+    }
+  }, 4000);
+
   const tc = google.accounts.oauth2.initTokenClient({
     client_id: CLIENT_ID,
     scope: SCOPES + ' https://www.googleapis.com/auth/userinfo.email',
     prompt: '',
     hint: _silentEmail,
     callback: async (resp) => {
+      clearTimeout(_silentTimer);
       if (resp.error) {
-        // Silent refresh failed — show login screen
         document.getElementById('login-screen').style.display = 'flex';
         return;
       }
@@ -6302,7 +6336,7 @@ async function driveLoadAll() {
 
 async function driveSaveDB() {
   if (!_driveToken) return;
-  showSync('Saving…');
+  showSync('Saving to Drive…');
   try {
     const payload = {
       ordersRaw: DB.ordersRaw, shipments: DB.shipments, ordersIndex: DB.ordersIndex,
@@ -6314,8 +6348,11 @@ async function driveSaveDB() {
       flipkartLoaded: DB.flipkartLoaded, d2cLoaded: DB.d2cLoaded, reconDone: DB.reconDone,
     };
     await driveWrite(DRIVE_FILES.db, payload);
-    hideSync();
-  } catch(e) { syncError('Save failed: ' + e.message); }
+    showSync('✓ Saved');
+    setTimeout(hideSync, 2000);
+  } catch(e) {
+    syncError('Save failed: ' + e.message);
+  }
 }
 
 async function driveSaveRC(rc) {
