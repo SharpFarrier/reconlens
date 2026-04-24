@@ -6078,15 +6078,40 @@ function syncError(msg) {
 }
 
 function initGoogleAuth() {
-  const saved = localStorage.getItem(TOKEN_KEY);
   const email = localStorage.getItem(EMAIL_KEY);
-  if (saved && email) {
-    _driveToken = saved;
-    bootWithDrive(email);
+  if (email) {
+    // Try silent token refresh first
+    _silentEmail = email;
+    _trySignInSilent();
     return;
   }
-  // Show login screen
   document.getElementById('login-screen').style.display = 'flex';
+}
+
+let _silentEmail = null;
+
+function _trySignInSilent() {
+  if (!window.google) {
+    // GSI not loaded yet — show login screen
+    document.getElementById('login-screen').style.display = 'flex';
+    return;
+  }
+  const tc = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES + ' https://www.googleapis.com/auth/userinfo.email',
+    prompt: '',
+    hint: _silentEmail,
+    callback: async (resp) => {
+      if (resp.error) {
+        // Silent refresh failed — show login screen
+        document.getElementById('login-screen').style.display = 'flex';
+        return;
+      }
+      _driveToken = resp.access_token;
+      bootWithDrive(_silentEmail);
+    }
+  });
+  tc.requestAccessToken();
 }
 
 function driveSignIn() {
@@ -6120,11 +6145,10 @@ function driveSignIn() {
         const info = await emailResp.json();
         const email = info.email;
 
-        // Verify access by listing files in the folder
-        // If user has no access to the folder this will return an empty list or error
+        // Verify access by listing files in the folder (works for owned and shared folders)
         const q = encodeURIComponent(`'${FOLDER_ID}' in parents and trashed=false`);
         const listResp = await fetch(
-          `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&pageSize=1`,
+          `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&pageSize=1&includeItemsFromAllDrives=true&supportsAllDrives=true`,
           { headers: { Authorization: 'Bearer ' + _driveToken } }
         );
 
@@ -6142,7 +6166,6 @@ function driveSignIn() {
           return;
         }
 
-        localStorage.setItem(TOKEN_KEY, _driveToken);
         localStorage.setItem(EMAIL_KEY, email);
         bootWithDrive(email);
       } catch(e) {
@@ -6317,7 +6340,6 @@ async function driveSaveDiscounts() {
 }
 
 function driveSignOut() {
-  localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(EMAIL_KEY);
   _driveToken = null;
   location.reload();
