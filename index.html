@@ -2643,7 +2643,7 @@ function engineRecon() {
   // Build unified flags list — dispatched orders only
   DB.flags = [
     ...reconRows.filter(r => r.status === 'Delayed' && r.from_dispatch !== false).map(r => ({
-      order_no: r.order_no, platform: r.platform, sku: r.skus.join(', '),
+      order_no: r.order_no, platform: r.platform, sku: r.skus.map(s=>getMasterSku(s,r.order_no)).join(', '),
       flag_type: 'Not Paid', detail: `${r.days_since_dispatch} days since dispatch`,
       days: r.days_since_dispatch, amount: 0, from_dispatch: true
     })),
@@ -2870,7 +2870,7 @@ function renderOrdersTable() {
       <tr class="order-row${isMulti?' open':''}" onclick="toggleShipments('${rowId}','${o.orderNo}',${idx})">
         <td class="mono">${o.orderNo}</td>
         <td>${platPill(o.platform)}</td>
-        <td class="dim">${o.skus.slice(0,2).join(', ')}${o.skus.length>2?` +${o.skus.length-2}`:''}</td>
+        <td class="dim">${displaySkus(o.skus, o.orderNo)}</td>
         <td class="dim">${o.firstDate||'—'}</td>
         <td class="num">${ships.length > 1 ? `<span class="pill p-multi">${ships.length}</span>` : ships.length}</td>
         <td>${recon ? statusPill(recon.status) : '<span class="pill p-flag">No payment data</span>'}</td>
@@ -3075,7 +3075,7 @@ function renderDispatchedTable() {
           style="${!hasBreakdown?'cursor:default':''}">
         <td class="mono">${r.order_no}</td>
         <td>${platPill(r.platform)}</td>
-        <td class="dim">${r.skus.slice(0,2).join(', ')}${r.skus.length>2?` +${r.skus.length-2}`:''}</td>
+        <td class="dim">${displaySkus(r.skus, r.order_no)}</td>
         <td class="dim">${r.order_date ? fDate(r.order_date) : '—'}</td>
         <td class="dim m-hide">${r.dispatch_date ? fDate(r.dispatch_date) : '—'}</td>
         <td class="num m-hide" style="${dc}">${r.days_since_dispatch||'—'}</td>
@@ -3939,7 +3939,7 @@ function renderMasterTable() {
     html += `<tr ${rowFlag(r)}>
       <td class="mono">${r.order_no}${discBadge}</td>
       <td>${platPill(r.platform)}</td>
-      <td class="dim" style="font-size:10px">${r.skus.slice(0,2).join(', ')}${r.skus.length>2?` +${r.skus.length-2}`:''}</td>
+      <td class="dim" style="font-size:10px">${displaySkus(r.skus, r.order_no)}</td>
       <td class="dim">${r.order_date}</td>
       ${dispCell(r)}
       <td class="mono" style="font-size:9px;color:var(--text2)">${r.awb === '—' ? '—' : r.awb.split(',')[0].trim()}</td>
@@ -4032,7 +4032,7 @@ function renderDelayed() {
     html+=`<tr>
       <td class="mono">${r.order_no}</td>
       <td>${platPill(r.platform)}</td>
-      <td class="dim">${r.skus.slice(0,2).join(', ')}${r.skus.length>2?` +${r.skus.length-2}`:''}</td>
+      <td class="dim">${displaySkus(r.skus, r.order_no)}</td>
       <td class="dim">${r.dispatch_date?fDate(r.dispatch_date):'—'}</td>
       <td class="num" style="${dc};font-weight:600">${r.days_since_dispatch}</td>
       <td class="dim" style="font-size:10px">${ships.slice(0,2).map(s=>s.awb).join(', ')||'—'}</td>
@@ -4124,7 +4124,7 @@ function renderAccuracy() {
           style="${!hasBreakdown?'cursor:default':''}">
         <td class="mono">${r.order_no}</td>
         <td>${platPill(r.platform)}</td>
-        <td class="dim">${r.sku||'—'}</td>
+        <td class="dim">${displaySku(r.sku, r.order_no)}</td>
         <td><span class="pill ${isUnder?'p-refund':'p-flag'}">${r.issue_type}</span></td>
         <td class="num">${fFull(r.invoice)}</td>
         <td class="num">${fFull(r.expected)}</td>
@@ -4234,7 +4234,7 @@ function renderRefunds() {
     const action=isOver?'Raise dispute with platform':isUnder?'Chase remaining refund amount':'Verify physical return in warehouse';
     html+=`<tr>
       <td class="mono">${r.order_no}</td><td>${platPill(r.platform)}</td>
-      <td class="dim">${r.sku||'—'}</td>
+      <td class="dim">${displaySku(r.sku, r.order_no)}</td>
       <td><span class="pill ${pillCls}">${r.refund_status}</span></td>
       <td class="num">${r.order_value?fFull(r.order_value):'—'}</td>
       <td class="num" style="color:var(--danger)">${fFull(r.refund_amount)}</td>
@@ -4310,7 +4310,7 @@ function renderFlags() {
     html+=`<tr>
       <td class="mono">${r.order_no||'—'}</td>
       <td>${platPill(r.platform||'Unknown')}</td>
-      <td class="dim">${r.sku||'—'}</td>
+      <td class="dim">${displaySku(r.sku, r.order_no)}</td>
       <td>${typePill(r.flag_type)}</td>
       <td class="dim">${r.detail||'—'}</td>
       <td class="num" style="${(r.amount||0)>0?'color:var(--warn)':'color:var(--text3)'}">${(r.amount||0)>0?fFull(r.amount):'—'}</td>
@@ -4492,6 +4492,41 @@ function buildSkuCatMap() {
 // ══════════════════════════════════════════════
 const PRICING_KEY    = 'reconlens_pricing';
 const PRICING_HIST_KEY = 'reconlens_pricing_history';
+
+// ── Master SKU resolver ──
+// Given any platform SKU (Amazon, Flipkart, Website), returns the master SKU
+// Falls back to the ordersIndex for dispatch-level master SKU, then pricing master
+function getMasterSku(sku, orderNo) {
+  if (!sku) return '';
+  // 1. Check ordersRaw for master SKU linked to this order
+  if (orderNo) {
+    const row = (DB.ordersRaw || []).find(r => r.orderNo === orderNo && r.sku === sku);
+    if (row?.masterSku) return row.masterSku;
+  }
+  // 2. Check pricing master — try direct lookup first
+  const pricing = getPricingData();
+  if (pricing[sku]?.master_sku) return pricing[sku].master_sku;
+  // 3. Resolve through platform SKU mappings
+  const resolved = resolveToAmazonSku(sku);
+  if (resolved && pricing[resolved]?.master_sku) return pricing[resolved].master_sku;
+  if (resolved && resolved !== sku) return resolved; // at least return the canonical SKU
+  // 4. Fall back to input SKU
+  return sku;
+}
+
+// Display helper — returns master SKU with original SKU as subtitle if different
+function displaySku(sku, orderNo) {
+  const master = getMasterSku(sku, orderNo);
+  if (master && master !== sku) {
+    return `<span title="${sku}">${master}</span>`;
+  }
+  return sku || '—';
+}
+
+function displaySkus(skus, orderNo) {
+  if (!skus || !skus.length) return '—';
+  return skus.map(s => displaySku(s, orderNo)).join(', ');
+}
 
 function getPricingData() {
   try { const s = localStorage.getItem(PRICING_KEY); if (s) return JSON.parse(s); } catch(e) {}
