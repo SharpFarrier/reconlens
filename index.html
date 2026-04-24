@@ -1961,7 +1961,6 @@ function clearLog() { document.getElementById('logbox').innerHTML = ''; }
 // ══════════════════════════════════════════════
 async function runRecon(fromRerunBtn) {
   clearLog();
-  // Support calling from re-run buttons on other pages
   const btn = fromRerunBtn || document.getElementById('btn-run');
   if (btn) { btn.innerHTML = '<span class="spin"></span>Running...'; btn.disabled = true; }
   _reconStale = false;
@@ -1972,8 +1971,17 @@ async function runRecon(fromRerunBtn) {
   try {
     log('Starting reconciliation engine...', 'info');
 
-    if (DB.amazonLoaded) await engineAmazon();
-    if (DB.flipkartLoaded) await engineFlipkart();
+    // Only re-run sub-engines if raw data is present (i.e. files uploaded this session)
+    // If raw data is empty (e.g. re-run from stale banner after page reload), skip
+    // to avoid wiping out already-processed settlement data
+    const hasAzRaw = DB.amazonLoaded  && DB.amazonRaw  && DB.amazonRaw.length  > 0;
+    const hasFkRaw = DB.flipkartLoaded && DB.flipkartRaw && DB.flipkartRaw.length > 0;
+
+    if (hasAzRaw)  { log('Processing Amazon settlements...', 'info'); await engineAmazon(); }
+    else if (DB.amazonLoaded)  log('  Skipping Amazon engine — using cached settlement data', 'info');
+
+    if (hasFkRaw)  { log('Processing Flipkart settlements...', 'info'); await engineFlipkart(); }
+    else if (DB.flipkartLoaded) log('  Skipping Flipkart engine — using cached settlement data', 'info');
 
     engineRecon();
 
@@ -2195,7 +2203,7 @@ async function engineFlipkart() {
 
     // Expected calculations — source of truth is expected price from pricing master/events
     const orderDate  = l.order_date ? String(l.order_date).substring(0,10) : '';
-    const priceInfo  = getExpectedPriceInfo(l.sku, orderDate);
+    const priceInfo  = getExpectedPriceInfo(l.sku, orderDate, 'Flipkart');
     const expectedUnitP = priceInfo.price;
     const actualUnitP   = l.qty > 0 ? sale / l.qty : sale;
     const priceDiff     = expectedUnitP ? Math.abs(actualUnitP - expectedUnitP) : 0;
@@ -2419,7 +2427,7 @@ function engineRecon() {
           const orderDate   = dispatchRow?.firstDate || '';
 
           // Step 1: Expected price — event price or BAU (source of truth)
-          const priceInfo     = getExpectedPriceInfo(i.sku, orderDate);
+          const priceInfo     = getExpectedPriceInfo(i.sku, orderDate, 'Amazon');
           const expectedUnitP = priceInfo.price;
           const actualUnitP   = i.qty > 0 ? i.invoice / i.qty : i.invoice;
           const priceDiff     = expectedUnitP ? Math.abs(actualUnitP - expectedUnitP) : 0;
@@ -3179,7 +3187,7 @@ function buildAmazonBreakdown(orderNo) {
       const dispRow = DB.ordersIndex[orderNo];
       return dispRow?.firstDate || '';
     })();
-    const priceInfo    = getExpectedPriceInfo(item.sku, orderDate);
+    const priceInfo    = getExpectedPriceInfo(item.sku, orderDate, 'Amazon');
     const expUnitPrice = priceInfo.price;
     const expInvoice   = expUnitPrice ? expUnitPrice * (item.qty || 1) : invoice;
     const expRate      = priceInfo.source === 'event' && priceInfo.event?.reward_rate != null
@@ -3312,7 +3320,7 @@ function buildFlipkartBreakdown(orderNo) {
   const sale      = (fk.sale_amount || 0) + (fk.total_offer || 0);
   const actNet    = fk.bank_total  || fk.total || 0;
   const orderDate = fk.order_date ? String(fk.order_date).substring(0,10) : '';
-  const priceInfo = getExpectedPriceInfo(fk.sku, orderDate);
+  const priceInfo = getExpectedPriceInfo(fk.sku, orderDate, 'Flipkart');
   const expUnitP  = priceInfo.price;
   const expSale   = expUnitP ? expUnitP * (fk.qty || 1) : sale;
   const actUnitP  = fk.qty > 0 ? sale / fk.qty : sale;
@@ -5033,8 +5041,8 @@ function renderDiscountEvents() {
 
   sorted.forEach((e, idx) => {
     const today = new Date();
-    const isActive = today >= new Date(e.start_date) && today <= new Date(e.end_date);
-    const isPast   = today > new Date(e.end_date);
+    const isActive = today >= (parseAnyDate(e.start_date)||new Date(0)) && today <= (parseAnyDate(e.end_date)||new Date(0));
+    const isPast   = today > (parseAnyDate(e.end_date)||new Date(0));
     const rowId = `de-${idx}`;
 
     html += `<tr class="expandable-row" id="erow-${rowId}" onclick="toggleDiscountSkus('${rowId}',${e.id})">
@@ -5092,23 +5100,31 @@ function toggleDiscountSkus(rowId, eventId) {
 // ── Core price lookup ──
 // Returns { price, source } for a SKU on a given date
 // source: 'event' | 'bau' | null
-function getExpectedPriceInfo(sku, dateStr) {
+function getExpectedPriceInfo(sku, dateStr, platform) {
   if (!sku || !dateStr || dateStr === '—') return { price: null, source: null };
   const allSkus = getDiscountSkus();
   const events  = getDiscountEvents();
-  const d = new Date(dateStr);
-  if (isNaN(d)) return { price: null, source: null };
+  const d = parseAnyDate(dateStr);
+  if (!d) return { price: null, source: null };
 
   // Resolve Flipkart/website SKU to Amazon SKU key for pricing lookup
   const resolvedSku = resolveToAmazonSku(sku) || sku;
 
-  // Check discount events — match on resolved SKU, original SKU, or __ALL__ (overall event)
+  // Check discount events — match on platform, date range, and SKU
   for (const e of events) {
-    const matches = e.platform === 'Both' || e.platform === 'Amazon' || e.platform === 'Flipkart';
-    if (!matches) continue;
-    if (d < new Date(e.start_date) || d > new Date(e.end_date)) continue;
+    // Platform match: Both applies to all, otherwise must match caller's platform
+    const platMatch = e.platform === 'Both' ||
+                      !platform || // if no platform passed, match all
+                      e.platform === platform ||
+                      (platform === 'Amazon' && e.platform === 'Amazon') ||
+                      (platform === 'Flipkart' && e.platform === 'Flipkart') ||
+                      (platform === 'Website' && e.platform === 'Both');
+    if (!platMatch) continue;
+    const eStart = parseAnyDate(e.start_date);
+    const eEnd   = parseAnyDate(e.end_date);
+    if (!eStart || !eEnd) continue;
+    if (d < eStart || d > eEnd) continue;
     const skuList = allSkus[e.id] || [];
-    // Check: exact SKU match, resolved SKU match, or overall event (__ALL__)
     const skuRow = skuList.find(r => r.sku === sku || r.sku === resolvedSku || r.sku === '__ALL__');
     if (!skuRow) continue;
     const bau = getPriceOnDate(resolvedSku, dateStr);
@@ -5122,16 +5138,47 @@ function getExpectedPriceInfo(sku, dateStr) {
   return bau ? { price: bau, source: 'bau', bau } : { price: null, source: null };
 }
 
+// Robust date parser — handles YYYY-MM-DD, DD MMM YYYY, DD-MM-YYYY, DD.MM.YYYY
+function parseAnyDate(str) {
+  if (!str || str === '—') return null;
+  const s = String(str).trim();
+  // YYYY-MM-DD (ISO — most reliable)
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+    const d = new Date(s.substring(0,10) + 'T00:00:00');
+    return isNaN(d) ? null : d;
+  }
+  // DD MMM YYYY (e.g. "04 Feb 2026")
+  if (/^\d{1,2}\s+[A-Za-z]{3}\s+\d{4}/.test(s)) {
+    const d = new Date(s);
+    return isNaN(d) ? null : d;
+  }
+  // DD-MM-YYYY or DD/MM/YYYY
+  if (/^\d{2}[-\/]\d{2}[-\/]\d{4}/.test(s)) {
+    const [dd, mm, yyyy] = s.split(/[-\/]/);
+    const d = new Date(`${yyyy}-${mm}-${dd}T00:00:00`);
+    return isNaN(d) ? null : d;
+  }
+  // DD.MM.YYYY
+  if (/^\d{2}\.\d{2}\.\d{4}/.test(s)) {
+    const [dd, mm, yyyy] = s.split('.');
+    const d = new Date(`${yyyy}-${mm}-${dd}T00:00:00`);
+    return isNaN(d) ? null : d;
+  }
+  // Fallback
+  const d = new Date(s);
+  return isNaN(d) ? null : d;
+}
+
 // Legacy helper used in existing code
 function getDiscountForOrder(platform, dateStr) {
   if (!dateStr || dateStr === '—') return null;
   const allSkus = getDiscountSkus();
   const events  = getDiscountEvents();
-  const d = new Date(dateStr);
-  if (isNaN(d)) return null;
+  const d = parseAnyDate(dateStr);
+  if (!d) return null;
   return events.find(e => {
     const matches = e.platform === 'Both' || e.platform === platform;
-    const inRange = d >= new Date(e.start_date) && d <= new Date(e.end_date);
+    const inRange = d >= (parseAnyDate(e.start_date)||new Date(0)) && d <= (parseAnyDate(e.end_date)||new Date(0));
     return matches && inRange && (allSkus[e.id]||[]).length > 0;
   }) || null;
 }
@@ -5187,6 +5234,9 @@ function clearRegistry() {
 function saveDB() {
   try {
     const payload = {
+      // Raw arrays — localStorage only (large, not needed on Drive)
+      amazonRaw: DB.amazonRaw, flipkartRaw: DB.flipkartRaw,
+      // Processed data — synced to Drive
       ordersRaw: DB.ordersRaw, shipments: DB.shipments, ordersIndex: DB.ordersIndex,
       amazonItems: DB.amazonItems, amazonSettlements: DB.amazonSettlements,
       flipkartLedger: DB.flipkartLedger, flipkartNeft: DB.flipkartNeft, d2cRaw: DB.d2cRaw,
@@ -5198,7 +5248,6 @@ function saveDB() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     } catch(qe) {
-      // localStorage quota exceeded — Drive is the source of truth, that's fine
       console.warn('ReconLens: localStorage full, relying on Drive sync');
     }
     driveSaveDB(); // async, non-blocking — Drive is primary persistence
@@ -5211,6 +5260,8 @@ function loadDB() {
     if (!raw) return false;
     const saved = JSON.parse(raw);
 
+    DB.amazonRaw         = saved.amazonRaw          || [];
+    DB.flipkartRaw       = saved.flipkartRaw         || [];
     DB.ordersRaw         = saved.ordersRaw         || [];
     DB.shipments         = saved.shipments          || {};
     DB.ordersIndex       = saved.ordersIndex        || {};
