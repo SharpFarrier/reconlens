@@ -1118,6 +1118,7 @@ select.fsel:focus,input.fsearch:focus{border-color:rgba(200,240,74,.4)}
             <option value="Flipkart">Flipkart</option>
           </select>
           <input class="fsearch" id="ref-search" placeholder="Order ID / SKU" oninput="renderRefunds()">
+          <button class="btn btn-sm" onclick="exportRefundsCSV()" style="margin-left:auto" title="Export filtered rows to CSV">⬇ Export CSV</button>
         </div>
         <div id="refunds-table"></div>
       </div>
@@ -1158,6 +1159,7 @@ select.fsel:focus,input.fsearch:focus{border-color:rgba(200,240,74,.4)}
             <option value="Website">Website/D2C</option>
           </select>
           <input class="fsearch" id="flf-search" placeholder="Order ID / SKU" oninput="renderFlags()">
+          <button class="btn btn-sm" onclick="exportFlagsCSV()" style="margin-left:auto" title="Export filtered rows to CSV">⬇ Export CSV</button>
         </div>
         <div id="flags-table"></div>
       </div>
@@ -1626,23 +1628,28 @@ async function loadOrders(file) {
   DB.ordersIndex = {};
 
   rows.forEach(r => {
-    const orderNo = (r['order no']||r['order_no']||'').trim();
-    const sku = (r['sku']||'').trim();
+    const orderNo   = (r['order no']||r['order_no']||'').trim();
+    const sku       = (r['sku']||'').trim();
     const masterSku = (r['master_sku']||'').trim();
-    const awb = (r['awb']||'').trim();
-    const courier = (r['courier']||'').trim();
-    const date = (r['stock out date']||r['dispatch_date']||'').trim();
-    const platform = detectPlatform(orderNo);
+    const awb       = (r['awb']||'').trim();
+    const courier   = (r['courier']||'').trim();
+    const date      = (r['stock out date']||r['dispatch_date']||r['dispatch date']||'').trim();
+    const orderDate = (r['order_date']||r['order date']||r['Order Date']||'').trim();
+    const platform  = detectPlatform(orderNo);
 
     if (!orderNo) return;
 
-    DB.ordersRaw.push({orderNo, sku, masterSku, awb, courier, date, platform});
+    DB.ordersRaw.push({orderNo, sku, masterSku, awb, courier, date, orderDate, platform});
 
     if (!DB.shipments[orderNo]) DB.shipments[orderNo] = [];
     DB.shipments[orderNo].push({awb, sku, masterSku, courier, date});
 
     if (!DB.ordersIndex[orderNo]) {
-      DB.ordersIndex[orderNo] = {orderNo, platform, firstDate: date, skus: new Set(), allDates: new Set()};
+      DB.ordersIndex[orderNo] = {orderNo, platform, firstDate: date, orderDate: orderDate || '', skus: new Set(), allDates: new Set()};
+    }
+    // Keep earliest order date
+    if (orderDate && (!DB.ordersIndex[orderNo].orderDate || orderDate < DB.ordersIndex[orderNo].orderDate)) {
+      DB.ordersIndex[orderNo].orderDate = orderDate;
     }
     DB.ordersIndex[orderNo].skus.add(sku);
     if (date) DB.ordersIndex[orderNo].allDates.add(date);
@@ -2202,7 +2209,10 @@ async function engineFlipkart() {
     const sale = l.sale_amount + (l.total_offer || 0);
 
     // Expected calculations — source of truth is expected price from pricing master/events
-    const orderDate  = l.order_date ? String(l.order_date).substring(0,10) : '';
+    const orderDate  = l.order_date ? (() => {
+      const d = parseAnyDate(String(l.order_date));
+      return d ? d.toISOString().substring(0,10) : '';
+    })() : '';
     const priceInfo  = getExpectedPriceInfo(l.sku, orderDate, 'Flipkart');
     const expectedUnitP = priceInfo.price;
     const actualUnitP   = l.qty > 0 ? sale / l.qty : sale;
@@ -2422,9 +2432,9 @@ function engineRecon() {
       items.forEach(i => {
         if (i.item_status === 'Paid' || i.item_status === 'Partially Refunded') {
           const rc        = getRateCard();
-          // Use dispatch date as order date for pricing lookup (most reliable proxy for Amazon)
+          // Use order date from dispatch CSV if available, fall back to dispatch date
           const dispatchRow = DB.ordersIndex[i['order-id']];
-          const orderDate   = dispatchRow?.firstDate || '';
+          const orderDate   = dispatchRow?.orderDate || dispatchRow?.firstDate || '';
 
           // Step 1: Expected price — event price or BAU (source of truth)
           const priceInfo     = getExpectedPriceInfo(i.sku, orderDate, 'Amazon');
@@ -2543,15 +2553,12 @@ function engineRecon() {
       order_no: o.orderNo,
       platform: o.platform,
       dispatch_date: o.firstDate,
-      order_date:    o.firstDate || '', // use dispatch date as order date proxy
       order_date: (() => {
-        if (o.platform === 'Amazon') {
-          const items = getAmazonItemsForOrder(o.orderNo);
-          return ''; // Amazon: use dispatch date as order date proxy (set below)
-        }
+        // Priority: 1. Dispatch CSV order date, 2. Flipkart settlement order date, 3. empty
+        if (o.orderDate) return o.orderDate;
         if (o.platform === 'Flipkart') {
           const fk = getFkItemForOrder(o.orderNo);
-          return fk?.order_date ? String(fk.order_date).substring(0,10) : '';
+          return (fk?.order_date ? (()=>{ const _d=parseAnyDate(String(fk.order_date)); return _d?_d.toISOString().substring(0,10):''; })() : '');
         }
         return '';
       })(),
@@ -2613,7 +2620,7 @@ function engineRecon() {
       reconRows.push({
         order_no: l.order_id || String(l.order_item_id), platform: 'Flipkart',
         dispatch_date: l.first_date,
-        order_date: l.order_date ? String(l.order_date).substring(0,10) : '',
+        order_date: (l.order_date ? (()=>{ const _d=parseAnyDate(String(l.order_date)); return _d?_d.toISOString().substring(0,10):''; })() : ''),
         days_since_dispatch: 0,
         shipment_count: 0, skus: [l.sku],
         status: (l.negative || (l.bank_total||0) === 0) ? 'Refunded' : 'Paid',
@@ -3183,9 +3190,8 @@ function buildAmazonBreakdown(orderNo) {
   items.forEach((item, idx) => {
     const invoice      = item.invoice;
     const orderDate    = (() => {
-      // Use dispatch date as order date proxy (most reliable for Amazon)
       const dispRow = DB.ordersIndex[orderNo];
-      return dispRow?.firstDate || '';
+      return dispRow?.orderDate || dispRow?.firstDate || '';
     })();
     const priceInfo    = getExpectedPriceInfo(item.sku, orderDate, 'Amazon');
     const expUnitPrice = priceInfo.price;
@@ -3319,7 +3325,7 @@ function buildFlipkartBreakdown(orderNo) {
   // Effective sale = customer payment + platform offer top-up
   const sale      = (fk.sale_amount || 0) + (fk.total_offer || 0);
   const actNet    = fk.bank_total  || fk.total || 0;
-  const orderDate = fk.order_date ? String(fk.order_date).substring(0,10) : '';
+  const orderDate = (fk.order_date ? (()=>{ const _d=parseAnyDate(String(fk.order_date)); return _d?_d.toISOString().substring(0,10):''; })() : '');
   const priceInfo = getExpectedPriceInfo(fk.sku, orderDate, 'Flipkart');
   const expUnitP  = priceInfo.price;
   const expSale   = expUnitP ? expUnitP * (fk.qty || 1) : sale;
@@ -4171,6 +4177,57 @@ function exportAccuracyCSV() {
   const csv=csvRows.join('\n'),blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');
   const filters=[tf||'all-issues',pf||'all-platforms'].filter(Boolean).join('_');
   a.href=url;a.download=`reconlens_accuracy_${filters}_${new Date().toISOString().substring(0,10)}.csv`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+
+function exportRefundsCSV() {
+  let rows = (DB.refundFlags||[]).filter(f => f.from_dispatch !== false);
+  const tf = document.getElementById('ref-type').value;
+  const pf = document.getElementById('ref-platform').value;
+  const q  = document.getElementById('ref-search').value.toLowerCase();
+  rows = rows.filter(r => {
+    if (tf && r.refund_status !== tf) return false;
+    if (pf && r.platform !== pf) return false;
+    if (q && !r.order_no.toLowerCase().includes(q) && !String(r.sku||'').toLowerCase().includes(q)) return false;
+    return true;
+  });
+  if (!rows.length) { alert('No rows to export.'); return; }
+  const esc = v => `"${String(v??'').replace(/"/g,'""')}"`;
+  const headers = ['Order ID','Platform','SKU','Order Value (₹)','Refund Received (₹)','Difference (₹)','Refund Status','Item Status'];
+  const csvRows = [headers.join(',')];
+  rows.forEach(r => {
+    csvRows.push([esc(r.order_no),esc(r.platform),esc(getMasterSku(r.sku,r.order_no)),
+      Math.round(r.order_value||0),Math.round(r.refund_amount||0),Math.round(r.diff||0),
+      esc(r.refund_status),esc(r.item_status||'')].join(','));
+  });
+  const csv=csvRows.join('\n'),blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  const filters=[tf||'all-types',pf||'all-platforms'].filter(Boolean).join('_');
+  a.href=url;a.download=`reconlens_refunds_${filters}_${new Date().toISOString().substring(0,10)}.csv`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+
+function exportFlagsCSV() {
+  let rows = (DB.flags||[]).filter(f => f.from_dispatch !== false);
+  const tf = document.getElementById('flf-type').value;
+  const pf = document.getElementById('flf-platform').value;
+  const q  = document.getElementById('flf-search').value.toLowerCase();
+  rows = rows.filter(r => {
+    if (tf && r.flag_type !== tf) return false;
+    if (pf && r.platform !== pf) return false;
+    if (q && !String(r.order_no||'').toLowerCase().includes(q) && !String(r.sku||'').toLowerCase().includes(q)) return false;
+    return true;
+  });
+  if (!rows.length) { alert('No rows to export.'); return; }
+  const esc = v => `"${String(v??'').replace(/"/g,'""')}"`;
+  const headers = ['Order ID','Platform','SKU','Flag Type','Amount at Risk (₹)','Notes'];
+  const csvRows = [headers.join(',')];
+  rows.forEach(r => {
+    csvRows.push([esc(r.order_no),esc(r.platform),esc(getMasterSku(r.sku,r.order_no)),
+      esc(r.flag_type),Math.round(r.amount||0),esc(r.notes||'')].join(','));
+  });
+  const csv=csvRows.join('\n'),blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  const filters=[tf||'all-types',pf||'all-platforms'].filter(Boolean).join('_');
+  a.href=url;a.download=`reconlens_flags_${filters}_${new Date().toISOString().substring(0,10)}.csv`;
   document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
 
@@ -5164,8 +5221,9 @@ function getExpectedPriceInfo(sku, dateStr, platform) {
     if (!skuRow) continue;
     const bau = getPriceOnDate(resolvedSku, dateStr);
     if (!bau) return { price: null, source: null };
-    const eventPrice = Math.round(bau * (1 - skuRow.discount_pct / 100));
-    return { price: eventPrice, source: 'event', event: e, discount_pct: skuRow.discount_pct, bau };
+    const discPct = parseFloat(skuRow.discount_pct) || 0;
+    const eventPrice = Math.round(bau * (1 - discPct / 100));
+    return { price: eventPrice, source: 'event', event: e, discount_pct: discPct, bau };
   }
 
   // Fall back to BAU
