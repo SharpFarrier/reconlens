@@ -749,7 +749,7 @@ select.fsel:focus,input.fsearch:focus{border-color:rgba(200,240,74,.4)}
 </div>
 
 <!-- ════════ SYNC INDICATOR ════════ -->
-<div id="sync-indicator" style="display:none;position:fixed;bottom:16px;right:16px;z-index:8000;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-sm);padding:6px 12px;font-size:11px;color:var(--text2);font-family:var(--mono)"></div>
+<div id="sync-indicator" style="display:none;position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:9999;background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:5px 14px;font-size:11px;color:var(--text2);font-family:var(--mono);box-shadow:0 2px 8px rgba(0,0,0,.2);pointer-events:none"></div>
 
 <div class="main">
   <div class="topbar">
@@ -6069,6 +6069,7 @@ const DRIVE_FILES = {
 
 let _driveToken = null;
 let _tokenClient = null;
+let _driveSavePending = false; // queued save waiting for token
 
 function showSync(msg) {
   const el = document.getElementById('sync-indicator');
@@ -6216,14 +6217,17 @@ function driveSignIn() {
 async function bootWithDrive(email) {
   document.getElementById('login-screen').style.display = 'none';
   document.querySelector('.main').style.display = 'flex';
-  // Show user email in sidebar
   const sfVal = document.querySelector('.sf-val');
-  if (sfVal) sfVal.textContent = email;
-  // Load all Drive data
+  if (sfVal && email) sfVal.textContent = email;
   showSync('Loading from Drive…');
   try {
     await driveLoadAll();
-    hideSync();
+    // Flush any saves that were queued before token was ready
+    if (_driveSavePending) {
+      await driveSaveDB();
+    } else {
+      hideSync();
+    }
     if (DB.ordersLoaded || DB.reconDone) {
       restoreUI();
       addClearButton();
@@ -6335,7 +6339,11 @@ async function driveLoadAll() {
 }
 
 async function driveSaveDB() {
-  if (!_driveToken) return;
+  if (!_driveToken) {
+    _driveSavePending = true; // will flush when token arrives
+    return;
+  }
+  _driveSavePending = false;
   showSync('Saving to Drive…');
   try {
     const payload = {
