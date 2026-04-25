@@ -2470,13 +2470,13 @@ function engineRecon() {
       .map(s => s.start_date || s['settlement-start-date'])
       .filter(Boolean)
       .map(d => String(d).substring(0,10))
+      .filter(d => d && d !== 'undefined' && d.length === 10)
       .sort();
-    // Fallback to posted_date if no settlement-start-date
-    if (!dates[0]) {
-      const pd = DB.amazonItems.map(i => i.posted_date).filter(Boolean).sort();
-      return pd[0] ? new Date(pd[0]) : null;
-    }
-    return new Date(dates[0]);
+    if (dates[0]) { const d = new Date(dates[0]); if (!isNaN(d)) return d; }
+    // Fallback to earliest posted_date
+    const pd = DB.amazonItems.map(i => i.posted_date).filter(Boolean).sort();
+    if (pd[0]) { const d = parseAnyDate(pd[0]); if (d && !isNaN(d)) return d; }
+    return null;
   })() : null;
   const fkCoverageStart = DB.flipkartLoaded ? (() => {
     const dates = DB.flipkartLedger.map(l => l.first_date).filter(Boolean).sort();
@@ -2484,8 +2484,8 @@ function engineRecon() {
   })() : null;
 
   // Log coverage so user can verify
-  if (azCoverageStart) log(`  Amazon settlement coverage from: ${azCoverageStart.toISOString().substring(0,10)}`, 'info');
-  if (fkCoverageStart) log(`  Flipkart settlement coverage from: ${fkCoverageStart.toISOString().substring(0,10)}`, 'info');
+  if (azCoverageStart && !isNaN(azCoverageStart)) log(`  Amazon settlement coverage from: ${azCoverageStart.toISOString().substring(0,10)}`, 'info');
+  if (fkCoverageStart && !isNaN(fkCoverageStart)) log(`  Flipkart settlement coverage from: ${fkCoverageStart.toISOString().substring(0,10)}`, 'info');
   log(`  Orders dispatched before coverage window → Not Paid (not Replacement)`, 'info');
 
   const reconRows = [];
