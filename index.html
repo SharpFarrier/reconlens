@@ -2480,7 +2480,9 @@ function engineRecon() {
   })() : null;
   const fkCoverageStart = DB.flipkartLoaded ? (() => {
     const dates = DB.flipkartLedger.map(l => l.first_date).filter(Boolean).sort();
-    return dates[0] ? new Date(dates[0]) : null;
+    if (!dates[0]) return null;
+    const d = parseAnyDate(dates[0]);
+    return (d && !isNaN(d)) ? d : null;
   })() : null;
 
   // Log coverage so user can verify
@@ -2495,7 +2497,7 @@ function engineRecon() {
 
   Object.values(DB.ordersIndex).forEach(o => {
     processedOrders.add(o.orderNo);
-    const dispatchDate = new Date(o.firstDate);
+    const dispatchDate = parseAnyDate(o.firstDate) || new Date(0);
     const days = isNaN(dispatchDate) ? 0 : Math.floor((today - dispatchDate) / 86400000);
     const shipments = DB.shipments[o.orderNo] || [];
 
