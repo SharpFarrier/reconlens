@@ -1500,42 +1500,34 @@ function renderUploadManifest(type) {
   if (!DB.manifest) DB.manifest = {orders:[],amazon:[],flipkart:[],d2c:[]};
   const files = DB.manifest[type] || [];
 
-  // Summary line
-  let summary = '';
-  let empty = false;
-  if (type === 'orders') {
-    const total = Object.keys(DB.ordersIndex).length;
-    const multi = Object.values(DB.ordersIndex).filter(o=>o.shipmentCount>1).length;
-    const dupDisp = Object.values(DB.ordersIndex).filter(o=>o.hasDuplicateDispatch).length;
-    summary = `<span style="color:var(--success)">${total} orders total · ${multi} multi-shipment${dupDisp?` · ⚠ ${dupDisp} duplicate`:''}</span>`;
-    empty = total === 0;
-  } else if (type === 'amazon') {
-    summary = `<span style="color:var(--success)">${DB.amazonRaw.length} rows total · ${[...new Set(DB.amazonRaw.map(r=>r['settlement-id']).filter(Boolean))].length} settlements</span>`;
-    empty = DB.amazonRaw.length === 0;
-  } else if (type === 'flipkart') {
-    summary = `<span style="color:var(--success)">${DB.flipkartRaw.length} rows total · ${DB.flipkartLedger.length} orders</span>`;
-    empty = DB.flipkartRaw.length === 0;
-  } else if (type === 'd2c') {
-    const cap = DB.d2cRaw.filter(r=>r.status==='captured').length;
-    summary = `<span style="color:var(--success)">${DB.d2cRaw.length} rows total · ${cap} captured</span>`;
-    empty = DB.d2cRaw.length === 0;
+  let hasData = false;
+  if (type === 'orders')   hasData = Object.keys(DB.ordersIndex).length > 0;
+  if (type === 'amazon')   hasData = DB.amazonRaw.length > 0;
+  if (type === 'flipkart') hasData = DB.flipkartRaw.length > 0;
+  if (type === 'd2c')      hasData = DB.d2cRaw.length > 0;
+
+  if (!hasData) { el.innerHTML = 'No files loaded'; return; }
+
+  if (!files.length) {
+    // Data exists but no manifest (loaded from old session)
+    let s = '';
+    if (type === 'orders') {
+      const t = Object.keys(DB.ordersIndex).length;
+      s = `${t} orders · ${Object.values(DB.ordersIndex).filter(o=>o.shipmentCount>1).length} multi-shipment`;
+    } else if (type === 'amazon')   s = `${DB.amazonRaw.length.toLocaleString()} rows`;
+    else if (type === 'flipkart') s = `${DB.flipkartRaw.length.toLocaleString()} rows`;
+    else if (type === 'd2c')      s = `${DB.d2cRaw.length.toLocaleString()} rows`;
+    el.innerHTML = `<span style="color:var(--success)">${s}</span>`;
+    return;
   }
 
-  if (empty) { el.innerHTML = 'No files loaded'; return; }
-
-  // Per-file list — only show if we have manifest entries
-  let fileSection = '';
-  if (files.length) {
-    const fileLines = files.map(f =>
-      `<div style="display:flex;justify-content:space-between;gap:12px;padding:1px 0">
-        <span style="color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</span>
-        <span style="color:var(--text3);white-space:nowrap;flex-shrink:0">${f.count}</span>
-      </div>`
-    ).join('');
-    fileSection = `<div style="margin-top:6px;border-top:1px solid var(--border);padding-top:4px">${fileLines}</div>`;
-  }
-
-  el.innerHTML = summary + fileSection;
+  // One row per file — filename left, row count right
+  el.innerHTML = files.map(f =>
+    `<div style="display:flex;justify-content:space-between;gap:12px;padding:2px 0">
+      <span style="color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px">${f.name}</span>
+      <span style="color:var(--success);white-space:nowrap;flex-shrink:0;font-size:10px;font-family:var(--mono)">${f.count}</span>
+    </div>`
+  ).join('');
 }
 
 function dzSetLoaded(id, msg) {
@@ -1793,20 +1785,31 @@ async function loadPayment(platform, files) {
       if (!f.name.endsWith('.txt')) continue;
       const text = await readText(f);
       const rows = parseTSV(text);
-      // Extract settlement ID from first header row
-      const settleId = rows[0]?.['settlement-id'] || rows.find(r => r['settlement-id'])?.['settlement-id'];
-      if (settleId) {
-        if (reg.amazon.has(String(settleId))) {
-          dupIds.push({ id: settleId, file: f.name });
-          continue; // skip this file
-        }
-        newIds.add(String(settleId));
+      // Extract all settlement IDs in this file
+      const fileSettleIds = new Set(rows.map(r => r['settlement-id']).filter(Boolean).map(String));
+      const settleId = [...fileSettleIds][0]; // primary settlement ID for registry check
+
+      if (settleId && reg.amazon.has(String(settleId))) {
+        dupIds.push({ id: settleId, file: f.name });
+        continue;
       }
-      rows.forEach(r => {
-        r._amount = parseFloat(r.amount)||0;
-        DB.amazonRaw.push(r);
-      });
+
+      // Remove any existing rows with these settlement IDs before appending
+      if (fileSettleIds.size) {
+        const before = DB.amazonRaw.length;
+        DB.amazonRaw = DB.amazonRaw.filter(r => !fileSettleIds.has(String(r['settlement-id'])));
+        const removed = before - DB.amazonRaw.length;
+        if (removed > 0) log(`  Replaced ${removed} existing rows for settlement(s) ${[...fileSettleIds].join(', ')}`, 'info');
+      }
+
+      rows.forEach(r => { r._amount = parseFloat(r.amount)||0; DB.amazonRaw.push(r); });
       totalRows += rows.length;
+      if (settleId) newIds.add(String(settleId));
+
+      // Store per-file count in manifest
+      if (!DB.manifest.amazon) DB.manifest.amazon = [];
+      DB.manifest.amazon = DB.manifest.amazon.filter(e => e.name !== f.name);
+      DB.manifest.amazon.push({ name: f.name, count: `${rows.length.toLocaleString()} rows`, addedAt: Date.now() });
     }
 
     if (dupIds.length) {
@@ -1835,11 +1838,6 @@ async function loadPayment(platform, files) {
     saveRegistry(reg);
 
     DB.amazonLoaded = true;
-    if (!DB.manifest.amazon) DB.manifest.amazon = [];
-    arr.forEach(f => {
-      DB.manifest.amazon = DB.manifest.amazon.filter(e => e.name !== f.name);
-      DB.manifest.amazon.push({ name: f.name, count: `${totalRows} rows`, addedAt: Date.now() });
-    });
     renderUploadManifest('amazon');
     document.getElementById('amazon-pay-meta').textContent =
       `Orders: ${[...new Set(DB.amazonRaw.filter(r=>r['order-id']).map(r=>r['order-id']))].length}`;
@@ -1854,6 +1852,7 @@ async function loadPayment(platform, files) {
 
     for (const f of arr) {
       if (!f.name.endsWith('.xlsx')) continue;
+      let fileOrders = 0; // per-file counter
       const buf = await readBuf(f);
       const wb = XLSX.read(buf, {type:'array'});
       const ws = wb.Sheets[wb.SheetNames.find(n=>n==='Orders')||wb.SheetNames[0]];
@@ -1879,6 +1878,14 @@ async function loadPayment(platform, files) {
         // All NEFTs in this file are duplicates
         dupFiles.push({ file: f.name, nefts: dupNefts });
         continue;
+      }
+
+      // Remove existing rows for these NEFTs before appending — prevents double-count on re-upload
+      if (fileNefts.size) {
+        const before = DB.flipkartRaw.length;
+        DB.flipkartRaw = DB.flipkartRaw.filter(r => !fileNefts.has(r.neft_id));
+        const removed = before - DB.flipkartRaw.length;
+        if (removed > 0) log(`  Replaced ${removed} existing Flipkart rows`, 'info');
       }
 
       const bankCol = headers.find(h=>h.includes('Bank Settlement Value'));
@@ -1913,9 +1920,13 @@ async function loadPayment(platform, files) {
           refund:          parseFloat(obj['Refund (Rs.)'||0])||0,
           subcat:          String(obj['Product Sub Category']||'').trim(),
         });
-        totalOrders++;
+        totalOrders++; fileOrders++;
       });
       fileNefts.forEach(n => newNefts.add(n));
+      // Per-file manifest
+      if (!DB.manifest.flipkart) DB.manifest.flipkart = [];
+      DB.manifest.flipkart = DB.manifest.flipkart.filter(e => e.name !== f.name);
+      DB.manifest.flipkart.push({ name: f.name, count: `${fileOrders.toLocaleString()} rows`, addedAt: Date.now() });
     }
 
     if (dupFiles.length) {
@@ -1957,7 +1968,7 @@ async function loadPayment(platform, files) {
               total_offer:parseFloat(o['Total Offer Amount (Rs.)']||0)||0, refund:parseFloat(o['Refund (Rs.)'||0])||0,
               subcat:String(o['Product Sub Category']||'').trim(),
             });
-            totalOrders++;
+            totalOrders++; fileOrders++;
           });
           d.nefts.forEach(n => newNefts.add(n));
         }
@@ -1968,11 +1979,6 @@ async function loadPayment(platform, files) {
     saveRegistry(reg);
 
     DB.flipkartLoaded = true;
-    if (!DB.manifest.flipkart) DB.manifest.flipkart = [];
-    arr.forEach(f => {
-      DB.manifest.flipkart = DB.manifest.flipkart.filter(e => e.name !== f.name);
-      DB.manifest.flipkart.push({ name: f.name, count: `${totalOrders} rows`, addedAt: Date.now() });
-    });
     renderUploadManifest('flipkart');
     document.getElementById('flipkart-pay-meta').textContent =
       `Unique orders: ${[...new Set(DB.flipkartRaw.map(r=>r.order_item_id))].length}`;
@@ -2104,16 +2110,17 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function engineAmazon() {
   log('Processing Amazon settlements...', 'info');
 
-  // Deduplicate raw rows by settlement-id + order-id + order-item-code + amount-description
-  // Prevents double-counting when the same transaction appears across multiple settlement files
+  // Deduplicate raw rows — same order+item+description+amount should only count once
+  // even if it appears across multiple settlement files (Amazon re-states transactions)
   const seen = new Set();
   const all = DB.amazonRaw.filter(r => {
-    const k = `${r['settlement-id']}|${r['order-id']}|${r['order-item-code']}|${r['amount-description']}|${r.amount}`;
+    if (!r['order-id'] || !r['order-item-code']) return true; // keep non-order rows
+    const k = `${r['order-id']}|${r['order-item-code']}|${r['amount-description']}|${r.amount}`;
     if (seen.has(k)) return false;
     seen.add(k);
     return true;
   });
-  log(`  Raw rows: ${DB.amazonRaw.length} → after dedup: ${all.length}`, 'info');
+  log(`  Raw rows: ${DB.amazonRaw.length} → after dedup: ${all.length}${DB.amazonRaw.length - all.length > 0 ? ` (removed ${DB.amazonRaw.length - all.length} duplicate rows)` : ''}`, 'info');
   const orders = all.filter(r=>r['transaction-type']==='Order');
   const refunds = all.filter(r=>r['transaction-type']==='Refund');
   const promos  = all.filter(r=>r['transaction-type']==='Promotion Deduction');
