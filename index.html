@@ -2127,7 +2127,10 @@ async function engineAmazon() {
     if(r['order-id']&&r['order-item-code']){
       const it=gi(r['order-id'],r['order-item-code']);
       if(!it.sku&&r.sku) it.sku=r.sku;
-      if(r['quantity-purchased']) it.qty=parseInt(r['quantity-purchased'])||1;
+      // quantity-purchased is the most reliable source
+      if(r['quantity-purchased'] && parseInt(r['quantity-purchased']) > 0) {
+        it.qty = parseInt(r['quantity-purchased']);
+      }
       if(!it.settlement_id&&r['settlement-id']) it.settlement_id=r['settlement-id'];
       if(!it.deposit_date&&r['deposit-date']) it.deposit_date=r['deposit-date'];
       if(!it.posted_date&&r['posted-date']) it.posted_date=r['posted-date'];
@@ -2156,6 +2159,16 @@ async function engineAmazon() {
   promos.forEach(r=>{if(r['order-id']&&r['order-item-code']) gi(r['order-id'],r['order-item-code']).net_promo+=r._amount;});
 
   DB.amazonItems = Object.values(imap).map(it=>{
+    // Infer qty from dispatch CSV if settlement qty=1 but dispatch shows multiple rows
+    // (Amazon sometimes reports qty=1 per item-code even for multi-unit orders)
+    if (it.qty === 1 && DB.ordersIndex[it['order-id']]) {
+      const dispRows = (DB.ordersRaw || []).filter(r =>
+        r.orderNo === it['order-id'] &&
+        (r.masterSku === it.sku || r.sku === it.sku ||
+         (DB.ordersIndex[it['order-id']]?.skus || []).includes(r.sku))
+      );
+      if (dispRows.length > 1) it.qty = dispRows.length;
+    }
     it.net_after_refund = it.net_order + it.net_refund + it.net_promo;
     it.commission_rate = it.invoice>0 ? Math.abs(it.commission)/it.invoice : 0;
     if (it.net_refund<0 && it.net_order<=0) it.item_status='Refund Only';
