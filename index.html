@@ -2103,7 +2103,17 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 // ── Amazon engine ──
 async function engineAmazon() {
   log('Processing Amazon settlements...', 'info');
-  const all = DB.amazonRaw;
+
+  // Deduplicate raw rows by settlement-id + order-id + order-item-code + amount-description
+  // Prevents double-counting when the same transaction appears across multiple settlement files
+  const seen = new Set();
+  const all = DB.amazonRaw.filter(r => {
+    const k = `${r['settlement-id']}|${r['order-id']}|${r['order-item-code']}|${r['amount-description']}|${r.amount}`;
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+  log(`  Raw rows: ${DB.amazonRaw.length} → after dedup: ${all.length}`, 'info');
   const orders = all.filter(r=>r['transaction-type']==='Order');
   const refunds = all.filter(r=>r['transaction-type']==='Refund');
   const promos  = all.filter(r=>r['transaction-type']==='Promotion Deduction');
