@@ -4658,6 +4658,13 @@ function buildSkuCatMap() {
 const PRICING_KEY    = 'reconlens_pricing';
 const PRICING_HIST_KEY = 'reconlens_pricing_history';
 
+// In-memory cache — used when localStorage is full (quota exceeded)
+let _pricingCache = null;
+let _pricingHistCache = null;
+let _rcCache = null;
+let _discountCache = null;
+let _discountSkuCache = null;
+
 // ── Master SKU resolver ──
 // Given any platform SKU (Amazon, Flipkart, Website), returns the master SKU
 // Falls back to the ordersIndex for dispatch-level master SKU, then pricing master
@@ -4694,21 +4701,25 @@ function displaySkus(skus, orderNo) {
 }
 
 function getPricingData() {
+  if (_pricingCache) return _pricingCache;
   try { const s = localStorage.getItem(PRICING_KEY); if (s) return JSON.parse(s); } catch(e) {}
-  return {};  // { sku: { sku, master_sku, title, asin, fk_sku, web_sku, price, updated_at } }
+  return {};
 }
 
 function getPricingHistory() {
+  if (_pricingHistCache) return _pricingHistCache;
   try { const s = localStorage.getItem(PRICING_HIST_KEY); if (s) return JSON.parse(s); } catch(e) {}
-  return {};  // { sku: [ {price, effective_from, effective_to} ] }
+  return {};
 }
 
 function savePricingData(data) {
+  _pricingCache = data; // always keep in memory
   try { localStorage.setItem(PRICING_KEY, JSON.stringify(data)); } catch(e) {}
   driveSavePricing();
 }
 
 function savePricingHistory(hist) {
+  _pricingHistCache = hist; // always keep in memory
   try { localStorage.setItem(PRICING_HIST_KEY, JSON.stringify(hist)); } catch(e) {}
   driveSavePricing();
 }
@@ -5061,14 +5072,17 @@ const DISCOUNT_SKU_KEY = 'reconlens_discount_skus';
 
 // Storage
 function getDiscountEvents() {
+  if (_discountCache) return _discountCache;
   try { const s = localStorage.getItem(DISCOUNT_KEY); if (s) return JSON.parse(s); } catch(e) {}
   return [];
 }
 function getDiscountSkus() {
+  if (_discountSkuCache) return _discountSkuCache;
   try { const s = localStorage.getItem(DISCOUNT_SKU_KEY); if (s) return JSON.parse(s); } catch(e) {}
-  return {}; // { event_id: [ {sku, discount_pct} ] }
+  return {};
 }
 function saveDiscountEvents(events) {
+  _discountCache = events;
   try { localStorage.setItem(DISCOUNT_KEY, JSON.stringify(events)); } catch(e) {}
   driveSaveDiscounts();
 }
@@ -6582,13 +6596,25 @@ async function driveLoadAll() {
   const rc = await driveRead(DRIVE_FILES.ratecard);
   if (rc) { try { localStorage.setItem(RC_KEY, JSON.stringify(rc)); } catch(e) {} }
   const pr = await driveRead(DRIVE_FILES.pricing);
-  if (pr) { try { localStorage.setItem(PRICING_KEY, JSON.stringify(pr)); } catch(e) {} }
+  if (pr) {
+    _pricingCache = pr;
+    try { localStorage.setItem(PRICING_KEY, JSON.stringify(pr)); } catch(e) {}
+  }
   const ph = await driveRead(DRIVE_FILES.pricing_history);
-  if (ph) { try { localStorage.setItem(PRICING_HIST_KEY, JSON.stringify(ph)); } catch(e) {} }
+  if (ph) {
+    _pricingHistCache = ph;
+    try { localStorage.setItem(PRICING_HIST_KEY, JSON.stringify(ph)); } catch(e) {}
+  }
   const dc = await driveRead(DRIVE_FILES.discounts);
-  if (dc) { try { localStorage.setItem(DISCOUNT_KEY, JSON.stringify(dc)); } catch(e) {} }
+  if (dc) {
+    _discountCache = dc;
+    try { localStorage.setItem(DISCOUNT_KEY, JSON.stringify(dc)); } catch(e) {}
+  }
   const ds = await driveRead(DRIVE_FILES.discount_skus);
-  if (ds) { try { localStorage.setItem(DISCOUNT_SKU_KEY, JSON.stringify(ds)); } catch(e) {} }
+  if (ds) {
+    _discountSkuCache = ds;
+    try { localStorage.setItem(DISCOUNT_SKU_KEY, JSON.stringify(ds)); } catch(e) {}
+  }
   // Load registry — critical for duplicate detection across sessions
   const rg = await driveRead(DRIVE_FILES.registry);
   if (rg) { try { localStorage.setItem(REGISTRY_KEY, JSON.stringify(rg)); } catch(e) {} }
