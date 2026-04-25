@@ -1497,33 +1497,45 @@ function dzDrop(e, id) {
 function renderUploadManifest(type) {
   const el = document.getElementById(`dz-${type}-status`);
   if (!el) return;
-  const files = (DB.manifest[type] || []);
-  if (!files.length) { el.innerHTML = 'No files loaded'; return; }
+  if (!DB.manifest) DB.manifest = {orders:[],amazon:[],flipkart:[],d2c:[]};
+  const files = DB.manifest[type] || [];
 
   // Summary line
   let summary = '';
+  let empty = false;
   if (type === 'orders') {
     const total = Object.keys(DB.ordersIndex).length;
     const multi = Object.values(DB.ordersIndex).filter(o=>o.shipmentCount>1).length;
-    summary = `<span style="color:var(--success)">${total} orders total · ${multi} multi-shipment</span>`;
+    const dupDisp = Object.values(DB.ordersIndex).filter(o=>o.hasDuplicateDispatch).length;
+    summary = `<span style="color:var(--success)">${total} orders total · ${multi} multi-shipment${dupDisp?` · ⚠ ${dupDisp} duplicate`:''}</span>`;
+    empty = total === 0;
   } else if (type === 'amazon') {
-    summary = `<span style="color:var(--success)">${DB.amazonRaw.length} rows total</span>`;
+    summary = `<span style="color:var(--success)">${DB.amazonRaw.length} rows total · ${[...new Set(DB.amazonRaw.map(r=>r['settlement-id']).filter(Boolean))].length} settlements</span>`;
+    empty = DB.amazonRaw.length === 0;
   } else if (type === 'flipkart') {
     summary = `<span style="color:var(--success)">${DB.flipkartRaw.length} rows total · ${DB.flipkartLedger.length} orders</span>`;
+    empty = DB.flipkartRaw.length === 0;
   } else if (type === 'd2c') {
     const cap = DB.d2cRaw.filter(r=>r.status==='captured').length;
     summary = `<span style="color:var(--success)">${DB.d2cRaw.length} rows total · ${cap} captured</span>`;
+    empty = DB.d2cRaw.length === 0;
   }
 
-  // Per-file list
-  const fileLines = files.map(f =>
-    `<div style="display:flex;justify-content:space-between;gap:12px;padding:1px 0">
-      <span style="color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</span>
-      <span style="color:var(--text3);white-space:nowrap;flex-shrink:0">${f.count}</span>
-    </div>`
-  ).join('');
+  if (empty) { el.innerHTML = 'No files loaded'; return; }
 
-  el.innerHTML = `${summary}<div style="margin-top:6px;border-top:1px solid var(--border);padding-top:4px">${fileLines}</div>`;
+  // Per-file list — only show if we have manifest entries
+  let fileSection = '';
+  if (files.length) {
+    const fileLines = files.map(f =>
+      `<div style="display:flex;justify-content:space-between;gap:12px;padding:1px 0">
+        <span style="color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</span>
+        <span style="color:var(--text3);white-space:nowrap;flex-shrink:0">${f.count}</span>
+      </div>`
+    ).join('');
+    fileSection = `<div style="margin-top:6px;border-top:1px solid var(--border);padding-top:4px">${fileLines}</div>`;
+  }
+
+  el.innerHTML = summary + fileSection;
 }
 
 function dzSetLoaded(id, msg) {
@@ -1711,15 +1723,16 @@ async function loadOrders(file) {
   });
 
   DB.ordersLoaded = true;
-  const total = Object.keys(DB.ordersIndex).length;
-  const multi = Object.values(DB.ordersIndex).filter(o=>o.shipmentCount>1).length;
+  const total   = Object.keys(DB.ordersIndex).length;
+  const multi   = Object.values(DB.ordersIndex).filter(o=>o.shipmentCount>1).length;
   const dupDisp = Object.values(DB.ordersIndex).filter(o=>o.hasDuplicateDispatch).length;
+  const newCount = total - prevTotal;
 
-  const newCount = Object.keys(DB.ordersIndex).length - prevTotal;
+  if (!DB.manifest) DB.manifest = {orders:[],amazon:[],flipkart:[],d2c:[]};
   if (!DB.manifest.orders) DB.manifest.orders = [];
-  // Remove existing entry for same filename
   DB.manifest.orders = DB.manifest.orders.filter(f => f.name !== file.name);
-  DB.manifest.orders.push({ name: file.name, count: `+${newCount} orders`, addedAt: Date.now() });
+  const countLabel = newCount > 0 ? `+${newCount} orders` : `${rows.length} rows (all merged)`;
+  DB.manifest.orders.push({ name: file.name, count: countLabel, addedAt: Date.now() });
   renderUploadManifest('orders');
   document.getElementById('btn-step1-next').disabled = false;
   document.getElementById('btn-clear-orders').style.display = 'inline-flex';
