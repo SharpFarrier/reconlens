@@ -5403,11 +5403,14 @@ function getRegistry() {
 
 function saveRegistry(reg) {
   try {
-    localStorage.setItem(REGISTRY_KEY, JSON.stringify({
+    const data = {
       amazon:   [...reg.amazon],
       flipkart: [...reg.flipkart],
       dispatch: [...reg.dispatch],
-    }));
+    };
+    localStorage.setItem(REGISTRY_KEY, JSON.stringify(data));
+    // Sync to Drive so registry persists across sessions/users
+    if (_driveToken) driveWrite(DRIVE_FILES.registry, data).catch(e => console.warn('Registry Drive save:', e));
   } catch(e) {}
 }
 
@@ -6294,6 +6297,7 @@ const DRIVE_FILES = {
   pricing_history:  'reconlens_pricing_history.json',
   discounts:        'reconlens_discounts.json',
   discount_skus:    'reconlens_discount_skus.json',
+  registry:         'reconlens_registry.json',
 };
 
 let _driveToken = null;
@@ -6565,6 +6569,9 @@ async function driveLoadAll() {
   if (dc) { try { localStorage.setItem(DISCOUNT_KEY, JSON.stringify(dc)); } catch(e) {} }
   const ds = await driveRead(DRIVE_FILES.discount_skus);
   if (ds) { try { localStorage.setItem(DISCOUNT_SKU_KEY, JSON.stringify(ds)); } catch(e) {} }
+  // Load registry — critical for duplicate detection across sessions
+  const rg = await driveRead(DRIVE_FILES.registry);
+  if (rg) { try { localStorage.setItem(REGISTRY_KEY, JSON.stringify(rg)); } catch(e) {} }
 }
 
 async function driveSaveDB() {
