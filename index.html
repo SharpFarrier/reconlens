@@ -4739,10 +4739,13 @@ function getPriceOnDate(sku, dateStr) {
 
   // Check history for a price valid on that date
   const hist = history[key] || [];
-  const target = dateStr ? new Date(dateStr) : new Date();
+  const target = dateStr ? parseAnyDate(dateStr) : new Date();
+  if (!target) return pricing[key]?.price || null; // unparseable date — fall back to current
+
   for (const entry of hist.slice().reverse()) {
-    const from = new Date(entry.effective_from);
-    const to   = entry.effective_to ? new Date(entry.effective_to) : new Date('2099-12-31');
+    const from = parseAnyDate(entry.effective_from);
+    const to   = entry.effective_to ? parseAnyDate(entry.effective_to) : new Date('2099-12-31');
+    if (!from) continue;
     if (target >= from && target <= to) return entry.price;
   }
   // Fall back to current price
