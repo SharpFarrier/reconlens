@@ -2127,8 +2127,9 @@ async function engineAmazon() {
   log(`  Orders:${orders.length}  Refunds:${refunds.length}  Promos:${promos.length}`, 'info');
 
   const imap = {};
-  function gi(oid, icode) {
-    const k = oid+'__'+icode;
+  function gi(oid, icode, sku) {
+    // When order-item-code is blank, fall back to SKU to prevent items merging
+    const k = oid + '__' + (icode || sku || 'unknown');
     if (!imap[k]) imap[k] = {
       'order-id':oid,'order-item-code':icode,sku:'',qty:1,
       invoice:0,principal:0,commission:0,referral:0,referral_gst:0,
@@ -2142,7 +2143,7 @@ async function engineAmazon() {
 
   all.forEach(r=>{
     if(r['order-id']&&r['order-item-code']){
-      const it=gi(r['order-id'],r['order-item-code']);
+      const it=gi(r['order-id'],r['order-item-code'],r['sku']);
       if(!it.sku&&r.sku) it.sku=r.sku;
       // quantity-purchased is the most reliable source
       if(r['quantity-purchased'] && parseInt(r['quantity-purchased']) > 0) {
@@ -2156,7 +2157,7 @@ async function engineAmazon() {
 
   orders.forEach(r=>{
     if(!r['order-id']||!r['order-item-code']) return;
-    const it=gi(r['order-id'],r['order-item-code']);
+    const it=gi(r['order-id'],r['order-item-code'],r['sku']);
     const d=(r['amount-description']||'').trim();
     const a=r._amount;
     it.net_order+=a;
@@ -2172,8 +2173,8 @@ async function engineAmazon() {
     if(d==='Shipping') it.shipping_revenue+=a;
     if(d==='Shipping commission') it.shipping_commission+=a;
   });
-  refunds.forEach(r=>{if(r['order-id']&&r['order-item-code']) gi(r['order-id'],r['order-item-code']).net_refund+=r._amount;});
-  promos.forEach(r=>{if(r['order-id']&&r['order-item-code']) gi(r['order-id'],r['order-item-code']).net_promo+=r._amount;});
+  refunds.forEach(r=>{if(r['order-id']&&r['order-item-code']) gi(r['order-id'],r['order-item-code'],r['sku']).net_refund+=r._amount;});
+  promos.forEach(r=>{if(r['order-id']&&r['order-item-code']) gi(r['order-id'],r['order-item-code'],r['sku']).net_promo+=r._amount;});
 
   DB.amazonItems = Object.values(imap).map(it=>{
     it.net_after_refund = it.net_order + it.net_refund + it.net_promo;
