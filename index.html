@@ -2403,9 +2403,25 @@ async function engineFlipkart() {
     };
   });
 
-  // Merge Flipkart accuracy flags into DB.accuracyFlags
+  // Merge Flipkart accuracy flags by order_no (multi-item orders → one row)
+  const mergedFkFlags = {};
+  fkAccuracyFlags.forEach(f => {
+    const key = f.order_no;
+    if (!mergedFkFlags[key]) {
+      mergedFkFlags[key] = { ...f };
+    } else {
+      const m = mergedFkFlags[key];
+      m.invoice          = (m.invoice || 0) + (f.invoice || 0);
+      m.expected_invoice = (m.expected_invoice || 0) + (f.expected_invoice || 0);
+      m.expected         = (m.expected || 0) + (f.expected || 0);
+      m.actual           = (m.actual || 0) + (f.actual || 0);
+      m.diff             = (m.diff || 0) + (f.diff || 0);
+      if (f.sku && f.sku !== m.sku) m.sku = [m.sku, f.sku].filter(Boolean).join(', ');
+      m.extra_flags = [...(m.extra_flags || []), ...(f.extra_flags || [])];
+    }
+  });
   DB.accuracyFlags = (DB.accuracyFlags || []).filter(f => f.platform !== 'Flipkart');
-  DB.accuracyFlags = DB.accuracyFlags.concat(fkAccuracyFlags);
+  DB.accuracyFlags = DB.accuracyFlags.concat(Object.values(mergedFkFlags));
 
   // NEFT batches — enriched with order lists segregated by payment/return
   const nmap = {};
@@ -2738,9 +2754,38 @@ function engineRecon() {
   const taggedAccuracy = accuracyFlags.map(tagDispatch);
   const taggedRefunds  = refundFlags.map(tagDispatch);
 
+  // Merge multiple flags for the same order into one row
+  // Multi-SKU orders (e.g. 2 items) should show as one entry with combined financials
+  const mergeFlags = (flags) => {
+    const merged = {};
+    flags.forEach(f => {
+      const key = f.order_no;
+      if (!merged[key]) {
+        merged[key] = { ...f };
+      } else {
+        const m = merged[key];
+        m.invoice          = (m.invoice || 0) + (f.invoice || 0);
+        m.expected_invoice = (m.expected_invoice || 0) + (f.expected_invoice || 0);
+        m.expected         = (m.expected || 0) + (f.expected || 0);
+        m.actual           = (m.actual || 0) + (f.actual || 0);
+        m.diff             = (m.diff || 0) + (f.diff || 0);
+        // Combine SKUs
+        if (f.sku && f.sku !== m.sku) m.sku = [m.sku, f.sku].filter(Boolean).join(', ');
+        // Combine extra flags
+        m.extra_flags = [...(m.extra_flags || []), ...(f.extra_flags || [])];
+        // Use worst issue type
+        const severity = {'Underpaid':3,'Overpaid':2,'Price Mismatch':1,'Shipping Anomaly':1,'Fee Anomaly':1};
+        if ((severity[f.issue_type]||0) > (severity[m.issue_type]||0)) m.issue_type = f.issue_type;
+      }
+    });
+    return Object.values(merged);
+  };
+
+  const mergedAccuracy = mergeFlags(taggedAccuracy);
+
   DB.accuracyFlags = [
     ...(DB.accuracyFlags || []).filter(f => f.platform !== 'Amazon'),
-    ...taggedAccuracy
+    ...mergedAccuracy
   ];
   // Re-tag existing FK flags too
   DB.accuracyFlags = DB.accuracyFlags.map(f =>
@@ -2755,7 +2800,7 @@ function engineRecon() {
       flag_type: 'Not Paid', detail: `${r.days_since_dispatch} days since dispatch`,
       days: r.days_since_dispatch, amount: 0, from_dispatch: true
     })),
-    ...taggedAccuracy.map(f => ({
+    ...mergedAccuracy.map(f => ({
       order_no: f.order_no, platform: f.platform, sku: f.sku,
       flag_type: f.issue_type,
       detail: `Expected ${fFull(f.expected)} · Got ${fFull(f.actual)}`,
