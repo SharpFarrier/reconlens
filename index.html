@@ -1422,6 +1422,12 @@ const DB = {
   flipkartLedger: [],
   flipkartNeft: [],
   d2cRaw: [],              // Razorpay payment rows
+  manifest: {              // per-file upload log for UI display
+    orders: [],            // [{name, orders, rows, addedAt}]
+    amazon: [],            // [{name, rows, settlementId, addedAt}]
+    flipkart: [],          // [{name, rows, orders, addedAt}]
+    d2c: [],               // [{name, rows, addedAt}]
+  },
   reconOutput: [],         // {order_no, platform, status, settled_amount, days, shipments, is_replacement}
   flags: [],
   accuracyFlags: [],       // {order_no, platform, sku, expected, actual, diff, issue_type}
@@ -1486,6 +1492,38 @@ function dzDrop(e, id) {
   const files = e.dataTransfer.files;
   if (id === 'orders') loadOrders(files[0]);
   else loadPayment(id, files);
+}
+
+function renderUploadManifest(type) {
+  const el = document.getElementById(`dz-${type}-status`);
+  if (!el) return;
+  const files = (DB.manifest[type] || []);
+  if (!files.length) { el.innerHTML = 'No files loaded'; return; }
+
+  // Summary line
+  let summary = '';
+  if (type === 'orders') {
+    const total = Object.keys(DB.ordersIndex).length;
+    const multi = Object.values(DB.ordersIndex).filter(o=>o.shipmentCount>1).length;
+    summary = `<span style="color:var(--success)">${total} orders total · ${multi} multi-shipment</span>`;
+  } else if (type === 'amazon') {
+    summary = `<span style="color:var(--success)">${DB.amazonRaw.length} rows total</span>`;
+  } else if (type === 'flipkart') {
+    summary = `<span style="color:var(--success)">${DB.flipkartRaw.length} rows total · ${DB.flipkartLedger.length} orders</span>`;
+  } else if (type === 'd2c') {
+    const cap = DB.d2cRaw.filter(r=>r.status==='captured').length;
+    summary = `<span style="color:var(--success)">${DB.d2cRaw.length} rows total · ${cap} captured</span>`;
+  }
+
+  // Per-file list
+  const fileLines = files.map(f =>
+    `<div style="display:flex;justify-content:space-between;gap:12px;padding:1px 0">
+      <span style="color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</span>
+      <span style="color:var(--text3);white-space:nowrap;flex-shrink:0">${f.count}</span>
+    </div>`
+  ).join('');
+
+  el.innerHTML = `${summary}<div style="margin-top:6px;border-top:1px solid var(--border);padding-top:4px">${fileLines}</div>`;
 }
 
 function dzSetLoaded(id, msg) {
@@ -1623,6 +1661,9 @@ async function loadOrders(file) {
 
   const rows = parseCSV(text);
 
+  // Track count before adding new orders for the manifest delta
+  const prevTotal = Object.keys(DB.ordersIndex).length;
+
   // Append to existing data — don't wipe previous months
   // Deduplicate: remove any existing rows for order numbers in the new file
   const newOrderNos = new Set(rows.map(r => (r['order no']||r['order_no']||'').trim()).filter(Boolean));
@@ -1674,7 +1715,12 @@ async function loadOrders(file) {
   const multi = Object.values(DB.ordersIndex).filter(o=>o.shipmentCount>1).length;
   const dupDisp = Object.values(DB.ordersIndex).filter(o=>o.hasDuplicateDispatch).length;
 
-  dzSetLoaded('orders', `${total} orders total · ${multi} multi-shipment${dupDisp ? ` · ⚠ ${dupDisp} duplicate dispatch` : ''} (last: ${file.name})`);
+  const newCount = Object.keys(DB.ordersIndex).length - prevTotal;
+  if (!DB.manifest.orders) DB.manifest.orders = [];
+  // Remove existing entry for same filename
+  DB.manifest.orders = DB.manifest.orders.filter(f => f.name !== file.name);
+  DB.manifest.orders.push({ name: file.name, count: `+${newCount} orders`, addedAt: Date.now() });
+  renderUploadManifest('orders');
   document.getElementById('btn-step1-next').disabled = false;
   document.getElementById('btn-clear-orders').style.display = 'inline-flex';
 
@@ -1685,6 +1731,7 @@ async function loadOrders(file) {
 
 function clearOrders() {
   DB.ordersLoaded = false; DB.ordersRaw = []; DB.shipments = {}; DB.ordersIndex = {};
+  if (DB.manifest) DB.manifest.orders = [];
   document.getElementById('dz-orders').classList.remove('loaded');
   document.getElementById('dz-orders-status').textContent = 'No file loaded';
   document.getElementById('btn-step1-next').disabled = true;
@@ -1775,7 +1822,12 @@ async function loadPayment(platform, files) {
     saveRegistry(reg);
 
     DB.amazonLoaded = true;
-    dzSetLoaded('amazon', `${DB.amazonRaw.length} rows total · ${arr.length} file(s) added${dupIds.length ? ` · ${dupIds.length} duplicate(s) skipped` : ''}`);
+    if (!DB.manifest.amazon) DB.manifest.amazon = [];
+    arr.forEach(f => {
+      DB.manifest.amazon = DB.manifest.amazon.filter(e => e.name !== f.name);
+      DB.manifest.amazon.push({ name: f.name, count: `${totalRows} rows`, addedAt: Date.now() });
+    });
+    renderUploadManifest('amazon');
     document.getElementById('amazon-pay-meta').textContent =
       `Orders: ${[...new Set(DB.amazonRaw.filter(r=>r['order-id']).map(r=>r['order-id']))].length}`;
   }
@@ -1903,7 +1955,12 @@ async function loadPayment(platform, files) {
     saveRegistry(reg);
 
     DB.flipkartLoaded = true;
-    dzSetLoaded('flipkart', `${DB.flipkartRaw.length} rows total · ${arr.length} file(s) added${dupFiles.length ? ` · ${dupFiles.length} duplicate(s) skipped` : ''}`);
+    if (!DB.manifest.flipkart) DB.manifest.flipkart = [];
+    arr.forEach(f => {
+      DB.manifest.flipkart = DB.manifest.flipkart.filter(e => e.name !== f.name);
+      DB.manifest.flipkart.push({ name: f.name, count: `${totalOrders} rows`, addedAt: Date.now() });
+    });
+    renderUploadManifest('flipkart');
     document.getElementById('flipkart-pay-meta').textContent =
       `Unique orders: ${[...new Set(DB.flipkartRaw.map(r=>r.order_item_id))].length}`;
   }
@@ -1924,10 +1981,13 @@ async function loadPayment(platform, files) {
     }
     const deduped = newRows.filter(r => !r.payment_id || !existingIds.has(r.payment_id));
     DB.d2cRaw.push(...deduped);
-    DB.d2cLoaded = true;
     const captured = DB.d2cRaw.filter(r => r.status === 'captured').length;
     const refunded = DB.d2cRaw.filter(r => r.status === 'refunded').length;
-    dzSetLoaded('d2c', `${DB.d2cRaw.length} rows total · last: ${f.name}`);
+    DB.d2cLoaded = true;
+    if (!DB.manifest.d2c) DB.manifest.d2c = [];
+    DB.manifest.d2c = DB.manifest.d2c.filter(e => e.name !== f.name);
+    DB.manifest.d2c.push({ name: f.name, count: `+${deduped.length} rows`, addedAt: Date.now() });
+    renderUploadManifest('d2c');
     document.getElementById('d2c-pay-meta').textContent =
       `${captured} captured · ${refunded} refunded · ${DB.d2cRaw.filter(r=>r.merchant_order_id).length} with order ID`;
   }
@@ -5337,7 +5397,7 @@ function saveDB() {
       // Processed data — synced to Drive
       ordersRaw: DB.ordersRaw, shipments: DB.shipments, ordersIndex: DB.ordersIndex,
       amazonItems: DB.amazonItems, amazonSettlements: DB.amazonSettlements,
-      flipkartLedger: DB.flipkartLedger, flipkartNeft: DB.flipkartNeft, d2cRaw: DB.d2cRaw,
+      flipkartLedger: DB.flipkartLedger, flipkartNeft: DB.flipkartNeft, d2cRaw: DB.d2cRaw, manifest: DB.manifest,
       reconOutput: DB.reconOutput, flags: DB.flags,
       accuracyFlags: DB.accuracyFlags, refundFlags: DB.refundFlags,
       ordersLoaded: DB.ordersLoaded, amazonLoaded: DB.amazonLoaded,
@@ -5368,6 +5428,7 @@ function loadDB() {
     DB.flipkartLedger    = saved.flipkartLedger     || [];
     DB.flipkartNeft      = saved.flipkartNeft       || [];
     DB.d2cRaw            = saved.d2cRaw             || [];
+    DB.manifest          = saved.manifest            || {orders:[],amazon:[],flipkart:[],d2c:[]};
     DB.reconOutput       = saved.reconOutput        || [];
     DB.flags             = saved.flags              || [];
     DB.accuracyFlags     = saved.accuracyFlags      || [];
@@ -5407,29 +5468,17 @@ function clearRegistryPrompt() {
 function restoreUI() {
   // Restore upload zone indicators so user knows what's loaded
   if (DB.ordersLoaded) {
-    const total = Object.keys(DB.ordersIndex).length;
-    const multi = Object.values(DB.ordersIndex).filter(o=>o.shipmentCount>1).length;
-    const dupDisp = Object.values(DB.ordersIndex).filter(o=>o.hasDuplicateDispatch).length;
-    dzSetLoaded('orders', `${total} orders total · ${multi} multi-shipment${dupDisp?` · ⚠ ${dupDisp} duplicate dispatch`:''}`);
+    renderUploadManifest('orders');
     document.getElementById('btn-step1-next').disabled = false;
     document.getElementById('btn-clear-orders').style.display = 'inline-flex';
   }
-  if (DB.amazonLoaded) {
-    dzSetLoaded('amazon', `${DB.amazonRaw.length} rows total · ${[...new Set(DB.amazonRaw.map(r=>r['settlement-id']).filter(Boolean))].length} settlements`);
-    document.getElementById('amazon-pay-meta').textContent =
-      `Orders: ${[...new Set(DB.amazonItems.map(i=>i['order-id']))].length}`;
-  }
-  if (DB.flipkartLoaded) {
-    dzSetLoaded('flipkart', `${DB.flipkartRaw.length} rows total · ${DB.flipkartLedger.length} orders`);
-    document.getElementById('flipkart-pay-meta').textContent =
-      `Unique orders: ${DB.flipkartLedger.length}`;
-  }
+  if (DB.amazonLoaded)   renderUploadManifest('amazon');
+  if (DB.flipkartLoaded) renderUploadManifest('flipkart');
   if (DB.d2cLoaded) {
-    const captured = DB.d2cRaw.filter(r=>r.status==='captured').length;
-    const refunded = DB.d2cRaw.filter(r=>r.status==='refunded').length;
-    dzSetLoaded('d2c', `${DB.d2cRaw.length} rows total`);
-    document.getElementById('d2c-pay-meta').textContent =
-      `${captured} captured · ${refunded} refunded`;
+    renderUploadManifest('d2c');
+    const cap = DB.d2cRaw.filter(r=>r.status==='captured').length;
+    const ref = DB.d2cRaw.filter(r=>r.status==='refunded').length;
+    document.getElementById('d2c-pay-meta').textContent = `${cap} captured · ${ref} refunded`;
   }
   checkStep2Ready();
 
@@ -6503,7 +6552,7 @@ async function driveSaveDB() {
     const payload = {
       ordersRaw: DB.ordersRaw, shipments: DB.shipments, ordersIndex: DB.ordersIndex,
       amazonItems: DB.amazonItems, amazonSettlements: DB.amazonSettlements,
-      flipkartLedger: DB.flipkartLedger, flipkartNeft: DB.flipkartNeft, d2cRaw: DB.d2cRaw,
+      flipkartLedger: DB.flipkartLedger, flipkartNeft: DB.flipkartNeft, d2cRaw: DB.d2cRaw, manifest: DB.manifest,
       reconOutput: DB.reconOutput, flags: DB.flags,
       accuracyFlags: DB.accuracyFlags, refundFlags: DB.refundFlags,
       ordersLoaded: DB.ordersLoaded, amazonLoaded: DB.amazonLoaded,
