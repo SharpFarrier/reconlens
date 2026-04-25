@@ -1623,9 +1623,15 @@ async function loadOrders(file) {
 
   const rows = parseCSV(text);
 
-  DB.ordersRaw = [];
-  DB.shipments = {};
-  DB.ordersIndex = {};
+  // Append to existing data — don't wipe previous months
+  // Deduplicate: remove any existing rows for order numbers in the new file
+  const newOrderNos = new Set(rows.map(r => (r['order no']||r['order_no']||'').trim()).filter(Boolean));
+  DB.ordersRaw = DB.ordersRaw.filter(r => !newOrderNos.has(r.orderNo));
+  // Also remove from index and shipments so they get rebuilt cleanly
+  newOrderNos.forEach(no => {
+    delete DB.ordersIndex[no];
+    delete DB.shipments[no];
+  });
 
   rows.forEach(r => {
     const orderNo   = (r['order no']||r['order_no']||'').trim();
@@ -1668,7 +1674,7 @@ async function loadOrders(file) {
   const multi = Object.values(DB.ordersIndex).filter(o=>o.shipmentCount>1).length;
   const dupDisp = Object.values(DB.ordersIndex).filter(o=>o.hasDuplicateDispatch).length;
 
-  dzSetLoaded('orders', `${file.name} · ${total} orders · ${multi} multi-shipment${dupDisp ? ` · ⚠ ${dupDisp} duplicate dispatch` : ''}`);
+  dzSetLoaded('orders', `${total} orders total · ${multi} multi-shipment${dupDisp ? ` · ⚠ ${dupDisp} duplicate dispatch` : ''} (last: ${file.name})`);
   document.getElementById('btn-step1-next').disabled = false;
   document.getElementById('btn-clear-orders').style.display = 'inline-flex';
 
@@ -1717,7 +1723,7 @@ async function loadPayment(platform, files) {
   const arr = Array.from(files);
 
   if (platform === 'amazon') {
-    DB.amazonRaw = [];
+    // Don't reset — append new files to existing data
     let totalRows = 0;
     const reg = getRegistry();
     const newIds = new Set();
@@ -1769,13 +1775,13 @@ async function loadPayment(platform, files) {
     saveRegistry(reg);
 
     DB.amazonLoaded = true;
-    dzSetLoaded('amazon', `${arr.length} file(s) · ${totalRows} rows${dupIds.length ? ` · ${dupIds.length} duplicate(s) skipped` : ''}`);
+    dzSetLoaded('amazon', `${DB.amazonRaw.length} rows total · ${arr.length} file(s) added${dupIds.length ? ` · ${dupIds.length} duplicate(s) skipped` : ''}`);
     document.getElementById('amazon-pay-meta').textContent =
       `Orders: ${[...new Set(DB.amazonRaw.filter(r=>r['order-id']).map(r=>r['order-id']))].length}`;
   }
 
   else if (platform === 'flipkart') {
-    DB.flipkartRaw = [];
+    // Don't reset — append new files to existing data
     let totalOrders = 0;
     const reg = getRegistry();
     const newNefts = new Set();
@@ -1897,32 +1903,31 @@ async function loadPayment(platform, files) {
     saveRegistry(reg);
 
     DB.flipkartLoaded = true;
-    dzSetLoaded('flipkart', `${arr.length} file(s) · ${totalOrders} rows${dupFiles.length ? ` · ${dupFiles.length} duplicate(s) skipped` : ''}`);
+    dzSetLoaded('flipkart', `${DB.flipkartRaw.length} rows total · ${arr.length} file(s) added${dupFiles.length ? ` · ${dupFiles.length} duplicate(s) skipped` : ''}`);
     document.getElementById('flipkart-pay-meta').textContent =
       `Unique orders: ${[...new Set(DB.flipkartRaw.map(r=>r.order_item_id))].length}`;
   }
 
   else if (platform === 'd2c') {
     const f = arr[0];
-    DB.d2cRaw = [];
+    // Append and deduplicate by payment_id — don't wipe previous months
+    const existingIds = new Set(DB.d2cRaw.map(r => r.payment_id).filter(Boolean));
+    let newRows = [];
     if (f.name.endsWith('.csv')) {
-      const text = await readText(f);
-      const rows = parseCSV(text);
-      DB.d2cRaw = parseRazorpayRows(rows);
+      newRows = parseRazorpayRows(parseCSV(await readText(f)));
     } else {
       const buf = await readBuf(f);
       const wb  = XLSX.read(buf, {type:'array'});
-      // Razorpay exports one sheet per month — parse all sheets
       wb.SheetNames.forEach(name => {
-        const ws   = wb.Sheets[name];
-        const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
-        DB.d2cRaw.push(...parseRazorpayRows(rows));
+        newRows.push(...parseRazorpayRows(XLSX.utils.sheet_to_json(wb.Sheets[name], {defval:''})));
       });
     }
+    const deduped = newRows.filter(r => !r.payment_id || !existingIds.has(r.payment_id));
+    DB.d2cRaw.push(...deduped);
     DB.d2cLoaded = true;
     const captured = DB.d2cRaw.filter(r => r.status === 'captured').length;
     const refunded = DB.d2cRaw.filter(r => r.status === 'refunded').length;
-    dzSetLoaded('d2c', `${f.name} · ${DB.d2cRaw.length} rows`);
+    dzSetLoaded('d2c', `${DB.d2cRaw.length} rows total · last: ${f.name}`);
     document.getElementById('d2c-pay-meta').textContent =
       `${captured} captured · ${refunded} refunded · ${DB.d2cRaw.filter(r=>r.merchant_order_id).length} with order ID`;
   }
@@ -5404,22 +5409,27 @@ function restoreUI() {
   if (DB.ordersLoaded) {
     const total = Object.keys(DB.ordersIndex).length;
     const multi = Object.values(DB.ordersIndex).filter(o=>o.shipmentCount>1).length;
-    dzSetLoaded('orders', `${total} orders restored · ${multi} multi-shipment`);
+    const dupDisp = Object.values(DB.ordersIndex).filter(o=>o.hasDuplicateDispatch).length;
+    dzSetLoaded('orders', `${total} orders total · ${multi} multi-shipment${dupDisp?` · ⚠ ${dupDisp} duplicate dispatch`:''}`);
     document.getElementById('btn-step1-next').disabled = false;
     document.getElementById('btn-clear-orders').style.display = 'inline-flex';
   }
   if (DB.amazonLoaded) {
-    dzSetLoaded('amazon', `${DB.amazonItems.length} items restored from cache`);
+    dzSetLoaded('amazon', `${DB.amazonRaw.length} rows total · ${[...new Set(DB.amazonRaw.map(r=>r['settlement-id']).filter(Boolean))].length} settlements`);
     document.getElementById('amazon-pay-meta').textContent =
       `Orders: ${[...new Set(DB.amazonItems.map(i=>i['order-id']))].length}`;
   }
   if (DB.flipkartLoaded) {
-    dzSetLoaded('flipkart', `${DB.flipkartLedger.length} orders restored from cache`);
+    dzSetLoaded('flipkart', `${DB.flipkartRaw.length} rows total · ${DB.flipkartLedger.length} orders`);
     document.getElementById('flipkart-pay-meta').textContent =
       `Unique orders: ${DB.flipkartLedger.length}`;
   }
   if (DB.d2cLoaded) {
-    dzSetLoaded('d2c', `D2C data restored from cache`);
+    const captured = DB.d2cRaw.filter(r=>r.status==='captured').length;
+    const refunded = DB.d2cRaw.filter(r=>r.status==='refunded').length;
+    dzSetLoaded('d2c', `${DB.d2cRaw.length} rows total`);
+    document.getElementById('d2c-pay-meta').textContent =
+      `${captured} captured · ${refunded} refunded`;
   }
   checkStep2Ready();
 
