@@ -4215,6 +4215,27 @@ function renderAccuracy() {
   const pf = document.getElementById('acf-platform').value;
   const q  = document.getElementById('acf-search').value.toLowerCase();
 
+  // Deduplicate by order_no — merge multi-item orders into one row
+  const orderMap = {};
+  rows.forEach(r => {
+    const key = String(r.order_no).trim();
+    if (!orderMap[key]) {
+      orderMap[key] = { ...r, order_no: key };
+    } else {
+      const m = orderMap[key];
+      m.invoice          = (m.invoice||0)          + (r.invoice||0);
+      m.expected_invoice = (m.expected_invoice||0)  + (r.expected_invoice||0);
+      m.expected         = (m.expected||0)          + (r.expected||0);
+      m.actual           = (m.actual||0)            + (r.actual||0);
+      m.diff             = (m.diff||0)              + (r.diff||0);
+      if (r.sku && r.sku !== m.sku) m.sku = [m.sku, r.sku].filter(Boolean).join(', ');
+      m.extra_flags = [...(m.extra_flags||[]), ...(r.extra_flags||[])];
+      const severity = {'Underpaid':3,'Overpaid':2,'Price Mismatch':1,'Shipping Anomaly':1,'Fee Anomaly':1};
+      if ((severity[r.issue_type]||0) > (severity[m.issue_type]||0)) m.issue_type = r.issue_type;
+    }
+  });
+  rows = Object.values(orderMap);
+
   const filtered = rows.filter(r=>{
     if (mf && !monthMatchesFilter(r.dispatch_date, mf)) return false;
     if (tf&&r.issue_type!==tf) return false;
@@ -4797,7 +4818,15 @@ function getPriceOnDate(sku, dateStr) {
     if (!from) continue;
     if (target >= from && target <= to) return entry.price;
   }
-  // Fall back to current price
+  // No range matched — if order is before all history, use earliest price
+  if (hist.length > 0) {
+    const sorted = hist.slice().sort((a,b) => (a.effective_from||'').localeCompare(b.effective_from||''));
+    const earliest = parseAnyDate(sorted[0].effective_from);
+    if (earliest && target < earliest) return sorted[0].price;
+    // Order is after all history — use latest price
+    return sorted[sorted.length-1].price;
+  }
+  // Fall back to current price entry
   return pricing[key]?.price || null;
 }
 
@@ -4949,12 +4978,17 @@ function loadPricingFile(input) {
       }
 
       if (!isNaN(curPrice) && curPrice > 0) {
-        const curFrom = lastUpd || (lDate || '2024-01-01');
+        // Current Price was valid from launch until the repricing date (Last Updated / NEW_PRICE_DATE)
+        const curFrom = lDate || '2024-01-01';
+        const curTo   = (!isNaN(newPrice) && newPrice > 0 && newPrice !== curPrice) ? NEW_PRICE_DATE : null;
         const prevHist = hist[hist.length - 1];
-        // Only add if it's a different price from launch
+        // Only add if different from launch price
         if (!prevHist || prevHist.price !== curPrice) {
           if (prevHist) prevHist.effective_to = curFrom;
-          hist.push({ price: curPrice, effective_from: curFrom, effective_to: null, label: 'Current' });
+          hist.push({ price: curPrice, effective_from: curFrom, effective_to: curTo, label: 'Current' });
+        } else if (prevHist) {
+          // Same as launch price — just extend its effective_to
+          prevHist.effective_to = curTo;
         }
       }
 
