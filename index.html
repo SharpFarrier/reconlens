@@ -6408,7 +6408,29 @@ const DRIVE_FILES = {
 
 let _driveToken = null;
 let _tokenClient = null;
+let _tokenExpiry = 0;
 let _driveSavePending = false; // queued save waiting for token
+
+async function ensureFreshToken() {
+  if (_driveToken && Date.now() < _tokenExpiry - 120000) return true;
+  return new Promise(resolve => {
+    if (!window.google?.accounts) { resolve(false); return; }
+    const email = localStorage.getItem(EMAIL_KEY);
+    const tc = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: SCOPES + ' https://www.googleapis.com/auth/userinfo.email',
+      prompt: '',
+      hint: email || '',
+      callback: (resp) => {
+        if (resp.error || !resp.access_token) { resolve(false); return; }
+        _driveToken = resp.access_token;
+        _tokenExpiry = Date.now() + ((resp.expires_in || 3600) * 1000);
+        resolve(true);
+      }
+    });
+    tc.requestAccessToken();
+  });
+}
 
 function showSync(msg) {
   const el = document.getElementById('sync-indicator');
@@ -6482,6 +6504,7 @@ function _trySignInSilent() {
         return;
       }
       _driveToken = resp.access_token;
+        _tokenExpiry = Date.now() + ((resp.expires_in || 3600) * 1000);
       bootWithDrive(_silentEmail);
     }
   });
@@ -6510,6 +6533,7 @@ function driveSignIn() {
         return;
       }
       _driveToken = resp.access_token;
+        _tokenExpiry = Date.now() + ((resp.expires_in || 3600) * 1000);
       // Verify access by checking if user can read the Drive folder
       // Access is granted by sharing the Drive folder — no code changes needed
       try {
@@ -6586,7 +6610,30 @@ async function bootWithDrive(email) {
 // ── Drive file registry (fileId cache) ──
 const _driveRegistry = {};
 
+// ── Drive compression helpers ──
+async function compressJSON(data) {
+  const json = JSON.stringify(data);
+  const stream = new Blob([json]).stream().pipeThrough(new CompressionStream('gzip'));
+  const buf = await new Response(stream).arrayBuffer();
+  // Convert to base64 for JSON-safe storage
+  const bytes = new Uint8Array(buf);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return { _compressed: true, _encoding: 'gzip+base64', data: btoa(binary) };
+}
+
+async function decompressJSON(obj) {
+  if (!obj?._compressed) return obj; // not compressed, return as-is
+  const binary = atob(obj.data);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+  const text = await new Response(stream).text();
+  return JSON.parse(text);
+}
+
 async function driveGetFileId(filename) {
+  await ensureFreshToken();
   if (_driveRegistry[filename]) return _driveRegistry[filename];
   const q = encodeURIComponent(`name='${filename}' and '${FOLDER_ID}' in parents and trashed=false`);
   const r = await fetch(
@@ -6602,6 +6649,7 @@ async function driveGetFileId(filename) {
 }
 
 async function driveRead(filename) {
+  await ensureFreshToken();
   const fileId = await driveGetFileId(filename);
   if (!fileId) return null;
   const r = await fetch(
@@ -6609,11 +6657,15 @@ async function driveRead(filename) {
     { headers: { Authorization: 'Bearer ' + _driveToken } }
   );
   if (!r.ok) return null;
-  return await r.json();
+  const raw = await r.json();
+  return await decompressJSON(raw);
 }
 
 async function driveWrite(filename, data) {
-  const json = JSON.stringify(data);
+  await ensureFreshToken();
+  // Compress the DB file (largest file) to reduce Drive storage and load time
+  const payload = (filename === DRIVE_FILES.db) ? await compressJSON(data) : data;
+  const json = JSON.stringify(payload);
   const blob = new Blob([json], { type: 'application/json' });
   let fileId = await driveGetFileId(filename);
   if (fileId) {
